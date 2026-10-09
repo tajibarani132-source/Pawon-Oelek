@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Buku warung Pawon Oelek: catat belanja dan penjualan, hitung sisa modal, laba kotor, dan uang kas akhir, lalu unduh laporan JPEG atau Excel.">
 <meta name="theme-color" content="#C4231B">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 56 56%22%3E%3Crect x=%2230%22 y=%223%22 width=%228%22 height=%2227%22 rx=%224%22 transform=%22rotate(32 34 16)%22 fill=%22%235C6459%22/%3E%3Cpath d=%22M5 30 A23 15 0 0 0 51 30 Z%22 fill=%22%231F231E%22/%3E%3Cellipse cx=%2228%22 cy=%2230%22 rx=%2223%22 ry=%224.5%22 fill=%22%23C4231B%22/%3E%3Cpath d=%22M18 44 h20 l-2.5 6 h-15 z%22 fill=%22%231F231E%22/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Pawon Oelek</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,7 +59,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body)
 /* Masthead */
 .masthead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;padding-block-end:18px;margin-block-end:20px;border-bottom:2px solid var(--ink)}
 .brand{display:flex;align-items:center;gap:14px;min-width:0}
-.mark{width:56px;height:56px;flex:none}
+.mark{width:clamp(76px,14vw,112px);height:auto;aspect-ratio:1;flex:none;display:block}
 h1{font-family:var(--font-display);font-weight:800;font-size:clamp(2.1rem,6vw,3.25rem);line-height:.92;letter-spacing:-.025em;margin:0;text-wrap:balance}
 h1 .accent{color:var(--chili)}
 .tagline{margin:6px 0 0;color:var(--muted);font-weight:700;font-size:.74rem;letter-spacing:.14em;text-transform:uppercase}
@@ -260,12 +261,7 @@ tfoot .num{font-size:1.05rem}
 <div class="app">
   <header class="masthead">
     <div class="brand">
-      <svg class="mark" viewBox="0 0 56 56" aria-hidden="true">
-        <rect x="30" y="3" width="8" height="27" rx="4" transform="rotate(32 34 16)" fill="var(--muted)"/>
-        <path d="M5 30 A23 15 0 0 0 51 30 Z" fill="var(--ink)"/>
-        <ellipse cx="28" cy="30" rx="23" ry="4.5" fill="var(--chili)"/>
-        <path d="M18 44 h20 l-2.5 6 h-15 z" fill="var(--ink)"/>
-      </svg>
+      <img class="mark" id="brandLogo" src="logo.webp" width="384" height="384" alt="Logo Pawon Oelek Khas Sunda">
       <div>
         <h1>Pawon <span class="accent">Oelek</span></h1>
         <p class="tagline">Buku belanja &amp; penjualan warung</p>
@@ -1268,6 +1264,34 @@ tfoot .num{font-size:1.05rem}
     return lines.map(fit);
   }
   function spaced(ctx, px) { try { ctx.letterSpacing = px + 'px'; } catch (e) { /* unsupported */ } }
+  async function logoImage() {
+    const img = $('brandLogo');
+    try {
+      if (!img.complete || !img.naturalWidth) await img.decode();
+      return img.naturalWidth ? img : null;
+    } catch (e) { return null; }
+  }
+  let logoB64Promise = null;
+  function logoBase64() {
+    if (!logoB64Promise) {
+      logoB64Promise = fetch('icon-192.png')
+        .then((r) => { if (!r.ok) throw new Error('logo'); return r.blob(); })
+        .then((b) => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(b); }))
+        .catch(() => { logoB64Promise = null; return null; });
+    }
+    return logoB64Promise;
+  }
+  // Pins the 72px logo to the right edge of the red title banner (column `col`, 0-based).
+  async function addExcelLogo(wb, ws, col) {
+    const base64 = await logoBase64();
+    if (!base64) return;
+    const id = wb.addImage({ base64, extension: 'png' });
+    const EMU = 9525, colPx = Math.floor(ws.getColumn(col + 1).width * 7 + 5);
+    ws.addImage(id, {
+      tl: { nativeCol: col, nativeColOff: Math.max(0, colPx - 72 - 8) * EMU, nativeRow: 0, nativeRowOff: 3 * EMU },
+      ext: { width: 72, height: 72 }, editAs: 'absolute'
+    });
+  }
 
   async function buildJpeg(S) {
     await fontsReady();
@@ -1288,7 +1312,8 @@ tfoot .num{font-size:1.05rem}
       { title: 'BELANJA', color: C.chili, head: 'BARANG  ·  HARGA × QTY', total: 'TOTAL BELANJA', sum: S.totalBuy, empty: 'Belum ada belanja dicatat.', count: `${S.buys.length} barang`, rows: lay(S.buys) },
       { title: 'PENJUALAN', color: C.good, head: 'MENU / BARANG  ·  HARGA JUAL × QTY', total: 'TOTAL PENJUALAN', sum: S.totalSale, empty: 'Belum ada penjualan dicatat.', count: `${S.sales.length} item`, rows: lay(S.sales) }
     ];
-    const BAND = 176, META = 44, SEC = 60, THEAD = 40, EMPTY = 60, TOTAL = 66, GAP = 30, BOX = 396, FOOT = 86;
+    const logo = await logoImage();
+    const BAND = 200, META = 44, SEC = 60, THEAD = 40, EMPTY = 60, TOTAL = 66, GAP = 30, BOX = 396, FOOT = 86;
     const secH = (s) => SEC + THEAD + (s.rows.length ? s.rows.reduce((a, r) => a + r.h, 0) : EMPTY) + TOTAL;
     const H = BAND + META + sections.reduce((a, s) => a + secH(s), 0) + GAP + BOX + FOOT;
     const scale = Math.max(1, Math.min(2, 30000 / H));
@@ -1311,18 +1336,23 @@ tfoot .num{font-size:1.05rem}
 
     // Band
     ctx.fillStyle = C.chili; ctx.fillRect(0, 0, W, BAND);
+    const tx = logo ? P + 174 : P;
+    if (logo) ctx.drawImage(logo, P - 12, 12, 176, 176);
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = `800 58px ${FONT.display}`; spaced(ctx, -1);
-    ctx.fillText('Pawon Oelek', P, 94);
+    ctx.font = `800 ${logo ? 50 : 58}px ${FONT.display}`; spaced(ctx, -1);
+    ctx.fillText('Pawon Oelek', tx, 104);
+    const brandEnd = tx + ctx.measureText('Pawon Oelek').width;
     spaced(ctx, 2.5); ctx.font = `700 14px ${FONT.body}`; ctx.globalAlpha = 0.88;
-    ctx.fillText('LAPORAN BELANJA & PENJUALAN', P, 130);
+    ctx.fillText('LAPORAN BELANJA & PENJUALAN', tx, 140);
     ctx.textAlign = 'right';
-    ctx.fillText('PERIODE', W - P, 68);
+    ctx.fillText('PERIODE', W - P, 80);
     ctx.globalAlpha = 1; spaced(ctx, 0);
+    const period = periodText(S.all);
     ctx.font = `700 20px ${FONT.body}`;
-    ctx.fillText(periodText(S.all), W - P, 98);
+    if (ctx.measureText(period).width > W - P - brandEnd - 28) ctx.font = `700 16px ${FONT.body}`;
+    ctx.fillText(period, W - P, 110);
     ctx.font = `500 15px ${FONT.body}`; ctx.globalAlpha = 0.88;
-    ctx.fillText(`${S.buys.length} belanja · ${S.sales.length} penjualan`, W - P, 128);
+    ctx.fillText(`${S.buys.length} belanja · ${S.sales.length} penjualan`, W - P, 140);
     ctx.globalAlpha = 1; ctx.textAlign = 'left';
 
     // Meta
@@ -1483,6 +1513,7 @@ tfoot .num{font-size:1.05rem}
     banner('A1:G1', 'PAWON OELEK', 20, true, WHITE, CHILI, 36);
     banner('A2:G2', 'Laporan Belanja & Penjualan Warung', 12, true, WHITE, CHILI, 22);
     banner('A3:G3', `Periode: ${periodText(S.all)}    ·    Dibuat: ${fmtLongDate(now)}, pukul ${fmtClock(now)}`, 10, false, MUTED, null, 20);
+    await addExcelLogo(wb, ws, 6);
 
     let r = 5;
     const section = (title, argb) => {
@@ -1634,6 +1665,7 @@ tfoot .num{font-size:1.05rem}
     ws.getCell('A3').value = `${rows.length} penghitungan tersimpan    ·    Dibuat: ${fmtLongDate(now)}, pukul ${fmtClock(now)}`;
     ws.getCell('A3').font = font({ size: 10, color: { argb: MUTED } });
     ws.getCell('A3').alignment = { vertical: 'middle', indent: 1 };
+    await addExcelLogo(wb, ws, 8);
 
     const head = ws.getRow(5);
     head.values = ['No', 'Periode', 'Disimpan', 'Modal', 'Total Belanja', 'Total Penjualan', 'Sisa Modal', 'Laba Kotor', 'Uang Kas Akhir'];
