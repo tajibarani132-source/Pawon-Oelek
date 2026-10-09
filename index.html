@@ -29,6 +29,8 @@
   --bad:#B3261E;
   --bad-soft:#FBE3E0;
   --focus:#1D5FD0;
+  --paper:#FFFFFF;
+  --paper-ink:#141414;
   --font-display:"Bricolage Grotesque","Plus Jakarta Sans",system-ui,sans-serif;
   --font-body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -86,7 +88,7 @@ h2{font-family:var(--font-display);font-weight:700;font-size:1.3rem;line-height:
 .panel-head .hint{margin:0;color:var(--muted);font-size:.85rem}
 
 /* Belanja / Penjualan switch */
-.switch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+.switch{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
 .switch button{font:inherit;text-align:left;border:0;border-radius:8px;padding:10px 14px;background:transparent;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;gap:2px;min-height:58px;min-width:0}
 .switch button:hover{background:var(--surface-2)}
 .switch .s-name{font-family:var(--font-display);font-weight:700;font-size:1.08rem;line-height:1.2}
@@ -94,6 +96,7 @@ h2{font-family:var(--font-display);font-weight:700;font-size:1.3rem;line-height:
 .switch button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .switch button[aria-pressed="true"] .s-meta{color:inherit;opacity:.78}
 .switch button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+@media (max-width:560px){.switch{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* Form */
 #itemForm{display:grid;gap:14px;grid-template-columns:repeat(6,minmax(0,1fr))}
@@ -111,9 +114,12 @@ h2{font-family:var(--font-display);font-weight:700;font-size:1.3rem;line-height:
 }
 .field{display:flex;flex-direction:column;gap:6px;min-width:0}
 label,.label{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-input{font:inherit;font-size:1rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:46px;width:100%;min-width:0}
-input::placeholder{color:var(--muted);opacity:.7}
-input:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+input,textarea,select{font:inherit;font-size:1rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:46px;width:100%;min-width:0}
+textarea{min-height:64px;resize:vertical;line-height:1.4}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.7}
+input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.check{display:flex;align-items:center;gap:10px;font-size:.88rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink);cursor:pointer}
+.check input{width:18px;height:18px;min-height:0;padding:0;flex:none;accent-color:var(--chili)}
 input[aria-invalid="true"],.money[data-invalid="true"]{border-color:var(--bad)}
 .money{display:flex;align-items:center;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;min-height:46px;min-width:0}
 .money span{padding-inline-start:12px;color:var(--muted);font-weight:700;font-size:.9rem}
@@ -236,6 +242,81 @@ tfoot .num{font-size:1.05rem}
 .hi-acts{display:flex;flex-wrap:wrap;gap:6px}
 @media (max-width:560px){.hi-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
+/* Nota customer */
+.kasir-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,280px);gap:20px;align-items:start}
+@media (max-width:1040px){.kasir-grid{grid-template-columns:minmax(0,1fr)}}
+.kasir-form{display:flex;flex-direction:column;gap:14px;min-width:0}
+.k-add{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr) auto;gap:10px;align-items:end}
+.k-name{grid-column:1/-1}
+@media (max-width:560px){.k-add{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.k-add .btn{grid-column:1/-1}}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip-btn{font:inherit;font-size:.82rem;font-weight:600;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:999px;padding:6px 12px;cursor:pointer;min-height:34px}
+.chip-btn span{font-family:var(--font-mono);font-weight:500;color:var(--muted);margin-inline-start:6px}
+.chip-btn:hover{border-color:var(--ink)}
+.chip-btn:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.cart{list-style:none;margin:0;padding:0;border-top:2px solid var(--ink)}
+.cart li{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name sub" "step del";gap:8px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.ci-name{grid-area:name;font-weight:600;min-width:0;overflow-wrap:anywhere}
+.ci-name small{display:block;font-family:var(--font-mono);font-weight:400;font-size:.78rem;color:var(--muted)}
+.stepper{grid-area:step;display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.stepper button{font:inherit;font-weight:800;width:36px;height:36px;border:0;background:var(--surface-2);color:var(--ink);cursor:pointer}
+.stepper button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.stepper span{min-width:2.8rem;text-align:center;font-family:var(--font-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.ci-sub{grid-area:sub;font-family:var(--font-mono);font-weight:700;white-space:nowrap;text-align:right}
+.ci-del{grid-area:del;justify-self:end}
+.stepper{justify-self:start}
+.cart-empty{margin:0;padding:14px 0;color:var(--muted);border-bottom:1px solid var(--line)}
+.pay{display:grid;gap:12px;padding:14px;border:1px dashed var(--line);border-radius:10px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;align-self:start}
+.seg button{font:inherit;font-weight:600;border:0;background:transparent;color:var(--ink);padding:8px 16px;cursor:pointer;min-height:40px}
+.seg button + button{border-inline-start:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.seg button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.cash-quick{display:flex;flex-wrap:wrap;gap:6px}
+.lines .grand dt{color:var(--ink);font-weight:700}
+.lines .grand dd{font-size:1.3rem;font-weight:700}
+.lines .change dd{color:var(--tone);font-weight:700}
+.k-actions{display:flex;flex-wrap:wrap;gap:10px}
+.k-hint{margin:0;font-size:.82rem;color:var(--muted)}
+.receipt{background:var(--paper);color:var(--paper-ink);font-family:var(--font-mono);font-size:12px;line-height:1.45;padding:16px 14px 20px;border-radius:4px;box-shadow:0 0 0 1px var(--line),0 10px 24px rgba(0,0,0,.14);max-width:300px;margin-inline:auto;overflow-wrap:anywhere}
+.receipt .r-logo{display:block;width:96px;height:96px;margin:0 auto 6px}
+.receipt .r-name{font-family:var(--font-display);font-weight:800;font-size:18px;line-height:1.1;text-align:center}
+.receipt .r-sub{text-align:center;font-weight:600}
+.receipt .r-addr{text-align:center;font-size:11px}
+.receipt hr{border:0;border-top:1px dashed var(--paper-ink);margin:8px 0}
+.receipt .r-kv{display:flex;justify-content:space-between;gap:8px}
+.receipt .r-kv span:last-child{text-align:right;white-space:nowrap}
+.receipt .r-iname{font-weight:600}
+.receipt .r-item{margin-bottom:3px}
+.receipt .r-qty{padding-inline-start:1ch}
+.receipt .r-total{font-weight:700;font-size:14px}
+.receipt .r-foot{text-align:center;margin-top:2px;white-space:pre-line}
+.receipt .r-empty{margin:0;text-align:center;opacity:.6;padding:18px 0}
+.shop-settings{margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.shop-settings summary{cursor:pointer;font-weight:700;min-height:32px;display:flex;align-items:center}
+.shop-fields{display:grid;gap:10px;padding-block:10px 4px}
+.recent{margin-top:22px}
+.recent h3{font-family:var(--font-display);font-weight:700;font-size:1.05rem;margin:0 0 6px}
+.nota-list{list-style:none;margin:0;padding:0}
+.nota-list li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.nl-main{min-width:0}
+.nl-main strong{font-family:var(--font-mono);font-weight:600}
+.nl-meta{display:block;color:var(--muted);font-size:.8rem}
+.nl-right{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.nl-total{font-family:var(--font-mono);font-weight:700;white-space:nowrap}
+.from-nota{display:block;font-family:var(--font-mono);font-size:.74rem;font-weight:500;color:var(--muted)}
+#printArea{display:none}
+@media print{
+  @page{margin:3mm}
+  html,body{background:#FFFFFF!important}
+  body > *:not(#printArea){display:none!important}
+  #printArea{display:block!important}
+  #printArea .receipt{box-shadow:none;border-radius:0;padding:0;margin:0;max-width:none;font-size:10.5px;color:#000000}
+  #printArea.w58 .receipt{width:48mm}
+  #printArea.w80 .receipt{width:72mm}
+  #printArea .r-logo{width:26mm;height:26mm}
+}
+
 .footnote{margin-block-start:28px;color:var(--muted);font-size:.84rem;max-width:72ch}
 .footnote p{margin:0 0 6px}
 
@@ -285,6 +366,10 @@ tfoot .num{font-size:1.05rem}
         <button type="button" id="tabPenjualan" data-view="penjualan" aria-pressed="false">
           <span class="s-name">Penjualan</span>
           <span class="s-meta" id="metaPenjualan">0 item · Rp 0</span>
+        </button>
+        <button type="button" id="tabNota" data-view="nota" aria-pressed="false">
+          <span class="s-name">Nota</span>
+          <span class="s-meta" id="metaNota">0 nota hari ini</span>
         </button>
         <button type="button" id="tabHistori" data-view="histori" aria-pressed="false">
           <span class="s-name">Histori</span>
@@ -363,6 +448,94 @@ tfoot .num{font-size:1.05rem}
         </div>
         <div class="empty" id="emptyState" hidden>
           <p><strong id="emptyTitle">Belum ada belanja tercatat</strong><span id="emptyText"></span></p>
+        </div>
+      </section>
+
+      <section class="panel kasir" id="kasirPanel" aria-labelledby="kasirTitle" hidden>
+        <div class="panel-head">
+          <h2 id="kasirTitle">Nota customer</h2>
+          <p class="hint" id="kNo"></p>
+        </div>
+        <div class="kasir-grid">
+          <div class="kasir-form">
+            <div class="field">
+              <label for="kCustomer">Nama customer (boleh dikosongkan)</label>
+              <input id="kCustomer" maxlength="60" autocomplete="off" placeholder="mis. Bu Rina">
+            </div>
+            <form id="kItemForm" class="k-add" novalidate>
+              <div class="field k-name">
+                <label for="kName">Menu / barang</label>
+                <input id="kName" list="menuList" autocomplete="off" maxlength="120" placeholder="mis. Ayam penyet">
+              </div>
+              <div class="field k-price">
+                <label for="kPrice">Harga</label>
+                <div class="money" id="kPriceWrap"><span>Rp</span><input id="kPrice" inputmode="numeric" autocomplete="off" placeholder="0"></div>
+              </div>
+              <div class="field k-qty">
+                <label for="kQty">Qty</label>
+                <input id="kQty" inputmode="decimal" autocomplete="off" value="1">
+              </div>
+              <button type="submit" class="btn btn-dark">Tambah</button>
+            </form>
+            <p class="form-error" id="kError" role="alert" hidden></p>
+            <div class="chips" id="kChips" aria-label="Menu cepat"></div>
+            <ul class="cart" id="kCart"></ul>
+            <div class="pay">
+              <div class="field">
+                <span class="label" id="kMethodLabel">Pembayaran</span>
+                <div class="seg" id="kMethod" role="group" aria-labelledby="kMethodLabel">
+                  <button type="button" data-method="Tunai">Tunai</button>
+                  <button type="button" data-method="QRIS">QRIS</button>
+                  <button type="button" data-method="Transfer">Transfer</button>
+                </div>
+              </div>
+              <div class="field" id="kPaidField">
+                <label for="kPaid">Uang diterima</label>
+                <div class="money"><span>Rp</span><input id="kPaid" inputmode="numeric" autocomplete="off" placeholder="Kosong = uang pas"></div>
+                <div class="cash-quick" id="kCash">
+                  <button type="button" class="chip-btn" data-cash="exact">Uang pas</button>
+                  <button type="button" class="chip-btn" data-cash="20000">20.000</button>
+                  <button type="button" class="chip-btn" data-cash="50000">50.000</button>
+                  <button type="button" class="chip-btn" data-cash="100000">100.000</button>
+                </div>
+              </div>
+              <dl class="lines">
+                <div class="grand"><dt>Total</dt><dd id="kTotal">Rp 0</dd></div>
+                <div class="change toned" id="kChangeRow" data-state="idle"><dt id="kChangeLabel">Kembalian</dt><dd id="kChange">Rp 0</dd></div>
+              </dl>
+            </div>
+            <label class="check"><input type="checkbox" id="kRecord" checked> Catat otomatis ke daftar penjualan</label>
+            <div class="k-actions">
+              <button type="button" class="btn btn-primary" id="kPrint">Simpan &amp; cetak nota</button>
+              <button type="button" class="btn btn-ghost" id="kImage">Simpan &amp; unduh gambar</button>
+              <button type="button" class="btn btn-ghost btn-small" id="kClear">Kosongkan</button>
+            </div>
+            <p class="k-hint" id="kPrintHint" hidden>Cetak langsung bisa dilakukan saat aplikasi dibuka di situsnya (GitHub Pages). Di tampilan ini, simpan nota sebagai gambar lalu cetak atau kirim ke customer.</p>
+            <p class="export-note" id="kNote" role="status"></p>
+          </div>
+          <div class="kasir-preview">
+            <p class="section-label" style="margin-block-end:8px">Pratinjau nota</p>
+            <div class="receipt" id="receiptPreview"></div>
+            <details class="shop-settings">
+              <summary>Info warung di nota</summary>
+              <div class="shop-fields">
+                <div class="field"><label for="sName">Nama warung</label><input id="sName" data-shop="name" maxlength="60"></div>
+                <div class="field"><label for="sTagline">Keterangan</label><input id="sTagline" data-shop="tagline" maxlength="60"></div>
+                <div class="field"><label for="sAddress">Alamat</label><textarea id="sAddress" data-shop="address" maxlength="160"></textarea></div>
+                <div class="field"><label for="sPhone">Telepon / WA</label><input id="sPhone" data-shop="phone" maxlength="30" inputmode="tel"></div>
+                <div class="field"><label for="sFooter">Pesan penutup</label><textarea id="sFooter" data-shop="footer" maxlength="200"></textarea></div>
+                <div class="field"><label for="sPaper">Lebar kertas printer</label>
+                  <select id="sPaper" data-shop="paper"><option value="58">58 mm (printer thermal kecil)</option><option value="80">80 mm (printer kasir)</option></select>
+                </div>
+                <label class="check"><input type="checkbox" id="sLogo" data-shop="showLogo"> Tampilkan logo di nota</label>
+              </div>
+            </details>
+          </div>
+        </div>
+        <div class="recent">
+          <h3>Nota terakhir</h3>
+          <ul class="nota-list" id="notaList"></ul>
+          <p class="k-hint" id="notaEmpty">Belum ada nota tersimpan. Nota yang Anda simpan muncul di sini dan bisa dicetak ulang.</p>
         </div>
       </section>
 
@@ -445,6 +618,7 @@ tfoot .num{font-size:1.05rem}
   <button type="button" class="btn btn-ghost btn-small" id="pbJump">Lihat hasil</button>
 </div>
 <div class="toast" id="toast" role="status" hidden></div>
+<div id="printArea" aria-hidden="true"></div>
 
 <script>
 (() => {
@@ -558,10 +732,21 @@ tfoot .num{font-size:1.05rem}
   const sampleHistory = () => SAMPLE_HISTORY.map((h) => ({
     id: uid(), savedAt: `${dayString(h.days)}T${h.saved}`, modal: h.modal, items: makeRows(h.buys, h.days), sales: makeRows(h.sales, h.days), sample: true
   }));
+  const DEFAULT_SHOP = {
+    name: 'Pawon Oelek', tagline: 'Khas Sunda', address: 'Perumahan Mario City Blok B No. 5, Parepare', phone: '0813-7677-9555',
+    footer: 'Terima kasih atas kunjungan Anda.\nSelamat menikmati!', paper: '58', showLogo: true, autoRecord: true
+  };
+  const PAY_METHODS = ['Tunai', 'QRIS', 'Transfer'];
+  const emptyDraft = () => ({ items: [], customer: '', method: 'Tunai', paid: 0, sample: false });
+  const sampleDraft = () => ({
+    items: [{ id: uid(), name: 'Ayam penyet', unit: 'porsi', price: 18000, qty: 2 }, { id: uid(), name: 'Es teh manis', unit: 'gelas', price: 4000, qty: 2 }],
+    customer: 'Contoh customer', method: 'Tunai', paid: 50000, sample: true
+  });
   function sampleState() {
     return {
       modal: 1000000, modalIsSample: true, sample: true, view: 'belanja',
-      items: makeRows(SAMPLE_BUY), sales: makeRows(SAMPLE_SALE), history: sampleHistory(), historyId: null
+      items: makeRows(SAMPLE_BUY), sales: makeRows(SAMPLE_SALE), history: sampleHistory(), historyId: null,
+      shop: { ...DEFAULT_SHOP }, draft: sampleDraft(), notas: []
     };
   }
   const normItem = (it) => ({
@@ -571,7 +756,35 @@ tfoot .num{font-size:1.05rem}
     unit: String(it.unit || '').slice(0, 24),
     price: Math.max(0, Math.round(Number(it.price) || 0)),
     qty: Math.max(0, Number(it.qty) || 0),
-    sample: !!it.sample
+    sample: !!it.sample,
+    nota: it.nota ? String(it.nota).slice(0, 24) : ''
+  });
+  const normShop = (sh) => {
+    const out = { ...DEFAULT_SHOP };
+    if (sh && typeof sh === 'object') {
+      ['name', 'tagline', 'address', 'phone', 'footer'].forEach((k) => { if (typeof sh[k] === 'string') out[k] = sh[k].slice(0, 200); });
+      if (sh.paper === '80' || sh.paper === '58') out.paper = sh.paper;
+      if (typeof sh.showLogo === 'boolean') out.showLogo = sh.showLogo;
+      if (typeof sh.autoRecord === 'boolean') out.autoRecord = sh.autoRecord;
+    }
+    return out;
+  };
+  const normDraft = (d) => ({
+    items: (Array.isArray(d.items) ? d.items : []).filter((x) => x && typeof x === 'object').map(normItem),
+    customer: String(d.customer || '').slice(0, 60),
+    method: PAY_METHODS.includes(d.method) ? d.method : 'Tunai',
+    paid: Math.max(0, Math.round(Number(d.paid) || 0)),
+    sample: !!d.sample
+  });
+  const normNota = (n) => ({
+    id: String(n.id || uid()),
+    no: String(n.no || '').slice(0, 24),
+    time: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(n.time) ? String(n.time).slice(0, 16) : nowLocal(),
+    customer: String(n.customer || '').slice(0, 60),
+    method: PAY_METHODS.includes(n.method) ? n.method : 'Tunai',
+    paid: Math.max(0, Math.round(Number(n.paid) || 0)),
+    items: (Array.isArray(n.items) ? n.items : []).filter((x) => x && typeof x === 'object').map(normItem),
+    saleIds: Array.isArray(n.saleIds) ? n.saleIds.map(String) : []
   });
   const isObj = (it) => it && typeof it === 'object';
   const normEntry = (h) => ({
@@ -589,11 +802,14 @@ tfoot .num{font-size:1.05rem}
       modal: Math.max(0, Math.round(Number(s.modal) || 0)),
       modalIsSample: !!s.modalIsSample,
       sample: !!s.sample,
-      view: ['penjualan', 'histori'].includes(s.view) ? s.view : 'belanja',
+      view: ['penjualan', 'nota', 'histori'].includes(s.view) ? s.view : 'belanja',
       items: s.items.filter(isObj).map(normItem),
       sales: sales.filter(isObj).map(normItem),
       history: history.filter(isObj).map(normEntry),
-      historyId: typeof s.historyId === 'string' ? s.historyId : null
+      historyId: typeof s.historyId === 'string' ? s.historyId : null,
+      shop: normShop(s.shop),
+      draft: isObj(s.draft) ? normDraft(s.draft) : (s.sample ? sampleDraft() : emptyDraft()),
+      notas: (Array.isArray(s.notas) ? s.notas : []).filter(isObj).map(normNota)
     };
   }
   function load() {
@@ -657,13 +873,15 @@ tfoot .num{font-size:1.05rem}
 
   function applyView() {
     const c = L();
-    const isHist = state.view === 'histori';
+    const isHist = state.view === 'histori', isNota = state.view === 'nota';
     $('tabBelanja').setAttribute('aria-pressed', String(state.view === 'belanja'));
     $('tabPenjualan').setAttribute('aria-pressed', String(state.view === 'penjualan'));
+    $('tabNota').setAttribute('aria-pressed', String(isNota));
     $('tabHistori').setAttribute('aria-pressed', String(isHist));
-    $('entryPanel').hidden = isHist;
-    $('ledgerPanel').hidden = isHist;
+    $('entryPanel').hidden = isHist || isNota;
+    $('ledgerPanel').hidden = isHist || isNota;
     $('historyPanel').hidden = !isHist;
+    $('kasirPanel').hidden = !isNota;
     $('entryTitle').textContent = c.title;
     $('entryHint').textContent = c.hint;
     $('lTime').textContent = c.timeLabel;
@@ -711,10 +929,12 @@ tfoot .num{font-size:1.05rem}
       del.textContent = 'Hapus'; del.setAttribute('aria-label', `Hapus ${it.name}`);
       wrap.append(edit, del);
       act.append(wrap);
+      const nameCell = cell('c-name', it.name);
+      if (it.nota) { const tag = document.createElement('span'); tag.className = 'from-nota'; tag.textContent = `Nota ${it.nota}`; nameCell.append(tag); }
       tr.append(
         cell('c-no', String(i + 1)),
         cell('c-time', fmtRowTime(it.time)),
-        cell('c-name', it.name),
+        nameCell,
         cell('c-price num', rupiah(it.price)),
         cell('c-qty num', qtyText(it.qty) + (it.unit ? ' ' + it.unit : '')),
         cell('c-sub num', rupiah(subtotal(it))),
@@ -775,6 +995,7 @@ tfoot .num{font-size:1.05rem}
     $('newBook').disabled = !hasAny && !state.historyId;
 
     renderHistory();
+    renderKasir();
   }
 
   function renderHistory() {
@@ -908,6 +1129,7 @@ tfoot .num{font-size:1.05rem}
     state.sales = state.sales.filter((it) => !it.sample);
     state.history = state.history.filter((h) => !h.sample);
     if (state.historyId && !state.history.some((h) => h.id === state.historyId)) state.historyId = null;
+    if (state.draft.sample) state.draft = emptyDraft();
     state.sample = false;
     if (state.modalIsSample) { state.modal = 0; state.modalIsSample = false; }
     if (editingId && !currentList().some((x) => x.id === editingId)) { exitEdit(); resetForm(); }
@@ -925,6 +1147,7 @@ tfoot .num{font-size:1.05rem}
 
   $('tabBelanja').addEventListener('click', () => setView('belanja'));
   $('tabPenjualan').addEventListener('click', () => setView('penjualan'));
+  $('tabNota').addEventListener('click', () => setView('nota'));
   $('tabHistori').addEventListener('click', () => setView('histori'));
 
   /* ---------- History ---------- */
@@ -1073,8 +1296,17 @@ tfoot .num{font-size:1.05rem}
   $('fQty').addEventListener('input', (e) => { sanitizeQty(e.target); updateCalc(); });
   $('fUnit').addEventListener('input', updateCalc);
   $('fName').addEventListener('input', (e) => {
-    const hit = L().catalog.find(([n]) => n.toLowerCase() === e.target.value.trim().toLowerCase());
-    if (hit && !$('fUnit').value.trim()) { $('fUnit').value = hit[1]; updateCalc(); }
+    const name = e.target.value.trim();
+    const hit = L().catalog.find(([n]) => n.toLowerCase() === name.toLowerCase());
+    if (hit && !$('fUnit').value.trim()) $('fUnit').value = hit[1];
+    if (state.view === 'penjualan' && name && !parseMoney($('fPrice').value)) {
+      const last = lastSale(name);
+      if (last) {
+        $('fPrice').value = last.price.toLocaleString('id-ID');
+        if (!$('fUnit').value.trim() && last.unit) $('fUnit').value = last.unit;
+      }
+    }
+    updateCalc();
   });
   $('fModal').addEventListener('input', (e) => {
     formatMoneyInput(e.target);
@@ -1134,6 +1366,400 @@ tfoot .num{font-size:1.05rem}
     toast(c.cleared, { label: 'Urungkan', fn: () => { state[key] = prev; if (prev.some((x) => x.sample)) state.sample = true; save(); render(); } });
   });
   $('resetCancel').addEventListener('click', disarmReset);
+
+  /* ---------- Nota customer ---------- */
+  const canPrint = typeof window.print === 'function' && !(window.claude && window.top !== window);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const num = (n) => Math.round(n).toLocaleString('id-ID');
+  const fmtNotaTime = (s) => { const d = parseLocal(s); return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${fmtClock(d)}`; };
+  const kNote = (msg, tone) => {
+    const n = $('kNote');
+    n.textContent = msg;
+    if (tone) n.dataset.tone = tone; else delete n.dataset.tone;
+  };
+  function notaTotals(n) {
+    const total = sumOf(n.items);
+    const cash = n.method === 'Tunai';
+    const paid = cash ? (n.paid > 0 ? n.paid : total) : total;
+    return { total, cash, paid, change: paid - total };
+  }
+  function nextNotaNo(time) {
+    const prefix = `PO-${time.slice(2, 10).replace(/-/g, '')}-`;
+    const max = state.notas.filter((n) => n.no.startsWith(prefix))
+      .reduce((m, n) => Math.max(m, parseInt(n.no.slice(prefix.length), 10) || 0), 0);
+    return prefix + String(max + 1).padStart(3, '0');
+  }
+  function lastSale(name) {
+    const k = name.trim().toLowerCase();
+    let best = null;
+    const consider = (it, time) => { if (it.name.toLowerCase() === k && (!best || time >= best.time)) best = { price: it.price, unit: it.unit, time }; };
+    state.sales.forEach((it) => consider(it, it.time));
+    state.notas.forEach((n) => n.items.forEach((it) => consider(it, n.time)));
+    return best;
+  }
+  function popularMenus() {
+    const map = new Map();
+    const add = (it, time) => {
+      const k = it.name.toLowerCase();
+      const e = map.get(k) || { name: it.name, unit: it.unit, price: it.price, time: '', count: 0 };
+      e.count += 1;
+      if (time >= e.time) { e.price = it.price; e.unit = it.unit; e.time = time; }
+      map.set(k, e);
+    };
+    state.sales.forEach((it) => { if (!it.nota) add(it, it.time); });
+    state.notas.forEach((n) => n.items.forEach((it) => add(it, n.time)));
+    return [...map.values()].sort((a, b) => b.count - a.count || (a.time < b.time ? 1 : -1)).slice(0, 8);
+  }
+  function receiptHTML(n) {
+    const sh = state.shop, T = notaTotals(n);
+    const kv = (l, r, cls = '') => `<div class="r-kv ${cls}"><span>${esc(l)}</span><span>${esc(r)}</span></div>`;
+    let h = '';
+    if (sh.showLogo) h += '<img class="r-logo" src="logo.webp" alt="">';
+    h += `<div class="r-name">${esc(sh.name)}</div>`;
+    if (sh.tagline) h += `<div class="r-sub">${esc(sh.tagline)}</div>`;
+    if (sh.address) h += `<div class="r-addr">${esc(sh.address)}</div>`;
+    if (sh.phone) h += `<div class="r-addr">Telp/WA ${esc(sh.phone)}</div>`;
+    h += '<hr>' + kv('No. nota', n.no) + kv('Tanggal', fmtNotaTime(n.time));
+    if (n.customer) h += kv('Customer', n.customer);
+    h += '<hr>';
+    n.items.forEach((it) => {
+      h += `<div class="r-item"><div class="r-iname">${esc(it.name)}</div>` +
+        kv(`${qtyText(it.qty)}${it.unit ? ' ' + it.unit : ''} x ${num(it.price)}`, num(subtotal(it)), 'r-qty') + '</div>';
+    });
+    h += '<hr>' + kv('TOTAL', rupiah(T.total), 'r-total');
+    if (T.cash) h += kv('Tunai', rupiah(T.paid)) + kv('Kembalian', rupiah(T.change));
+    else h += kv(n.method, rupiah(T.total));
+    h += '<hr>';
+    if (sh.footer.trim()) h += `<div class="r-foot">${esc(sh.footer.trim())}</div>`;
+    return h;
+  }
+  const draftNota = () => ({ no: nextNotaNo(nowLocal()), time: nowLocal(), customer: state.draft.customer.trim(), method: state.draft.method, paid: state.draft.paid, items: state.draft.items });
+
+  function renderKasir() {
+    const today = nowLocal().slice(0, 10);
+    $('metaNota').textContent = `${state.notas.filter((n) => n.time.slice(0, 10) === today).length} nota hari ini`;
+    if (state.view !== 'nota') return;
+    const d = state.draft;
+    const T = notaTotals(d);
+    $('kNo').textContent = `No. berikutnya ${nextNotaNo(nowLocal())}`;
+    if (document.activeElement !== $('kCustomer')) $('kCustomer').value = d.customer;
+
+    const chips = $('kChips');
+    chips.replaceChildren();
+    popularMenus().forEach((mn) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip-btn';
+      b.dataset.name = mn.name; b.dataset.price = mn.price; b.dataset.unit = mn.unit || '';
+      b.append(mn.name);
+      const sp = document.createElement('span'); sp.textContent = num(mn.price); b.append(sp);
+      b.setAttribute('aria-label', `Tambah 1 ${mn.name}, ${rupiah(mn.price)}`);
+      chips.append(b);
+    });
+    chips.hidden = !chips.children.length;
+
+    const cart = $('kCart');
+    cart.replaceChildren();
+    if (!d.items.length) {
+      const p = document.createElement('li'); p.className = 'cart-empty'; p.style.display = 'block';
+      p.textContent = 'Belum ada menu di nota. Ketik menu di atas atau ketuk menu cepat.';
+      cart.append(p);
+    }
+    d.items.forEach((it) => {
+      const li = document.createElement('li');
+      const nm = document.createElement('div'); nm.className = 'ci-name'; nm.textContent = it.name;
+      const sm = document.createElement('small'); sm.textContent = `${rupiah(it.price)}${it.unit ? ' / ' + it.unit : ''}`; nm.append(sm);
+      const st = document.createElement('div'); st.className = 'stepper';
+      const minus = document.createElement('button'); minus.type = 'button'; minus.textContent = '−'; minus.dataset.k = 'dec'; minus.dataset.id = it.id; minus.setAttribute('aria-label', `Kurangi ${it.name}`);
+      const q = document.createElement('span'); q.textContent = qtyText(it.qty);
+      const plus = document.createElement('button'); plus.type = 'button'; plus.textContent = '+'; plus.dataset.k = 'inc'; plus.dataset.id = it.id; plus.setAttribute('aria-label', `Tambah ${it.name}`);
+      st.append(minus, q, plus);
+      const sub = document.createElement('div'); sub.className = 'ci-sub'; sub.textContent = rupiah(subtotal(it));
+      const del = document.createElement('button'); del.type = 'button'; del.className = 'link-btn danger ci-del'; del.textContent = 'Hapus'; del.dataset.k = 'del'; del.dataset.id = it.id; del.setAttribute('aria-label', `Hapus ${it.name} dari nota`);
+      li.append(nm, st, sub, del);
+      cart.append(li);
+    });
+
+    $('kMethod').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.method === d.method)));
+    $('kPaidField').hidden = d.method !== 'Tunai';
+    if (document.activeElement !== $('kPaid')) $('kPaid').value = d.paid ? d.paid.toLocaleString('id-ID') : '';
+    $('kTotal').textContent = rupiah(T.total);
+    const row = $('kChangeRow');
+    if (d.method !== 'Tunai') { $('kChangeLabel').textContent = `Dibayar via ${d.method}`; $('kChange').textContent = rupiah(T.total); row.dataset.state = 'idle'; }
+    else if (d.paid > 0 && d.paid < T.total) { $('kChangeLabel').textContent = 'Uang kurang'; $('kChange').textContent = rupiah(T.total - d.paid); row.dataset.state = 'bad'; }
+    else { $('kChangeLabel').textContent = d.paid > 0 ? 'Kembalian' : 'Kembalian (uang pas)'; $('kChange').textContent = rupiah(T.change); row.dataset.state = d.paid > 0 && T.change > 0 ? 'good' : 'idle'; }
+
+    $('receiptPreview').innerHTML = d.items.length ? receiptHTML(draftNota()) : '<p class="r-empty">Pratinjau nota muncul setelah menu ditambahkan.</p>';
+    $('kRecord').checked = state.shop.autoRecord;
+    $('kPrint').hidden = !canPrint;
+    $('kPrintHint').hidden = canPrint;
+    $('kPrint').disabled = !d.items.length;
+    $('kImage').disabled = !d.items.length;
+    $('kClear').disabled = !d.items.length && !d.customer && !d.paid;
+
+    document.querySelectorAll('[data-shop]').forEach((el) => {
+      if (el === document.activeElement) return;
+      const v = state.shop[el.dataset.shop];
+      if (el.type === 'checkbox') el.checked = !!v; else el.value = v;
+    });
+
+    const list = $('notaList');
+    list.replaceChildren();
+    const recent = state.notas.slice().sort((a, b) => (a.time < b.time ? 1 : a.time > b.time ? -1 : 0)).slice(0, 10);
+    $('notaEmpty').hidden = recent.length > 0;
+    recent.forEach((n) => {
+      const li = document.createElement('li');
+      const main = document.createElement('div'); main.className = 'nl-main';
+      const no = document.createElement('strong'); no.textContent = n.no;
+      const meta = document.createElement('span'); meta.className = 'nl-meta';
+      meta.textContent = `${fmtRowTime(n.time)} · ${n.customer || 'Tanpa nama'} · ${n.items.length} menu · ${n.method}`;
+      main.append(no, meta);
+      const right = document.createElement('div'); right.className = 'nl-right';
+      const tot = document.createElement('span'); tot.className = 'nl-total'; tot.textContent = rupiah(notaTotals(n).total);
+      right.append(tot);
+      [[canPrint ? 'print' : null, 'Cetak ulang'], ['image', 'Gambar'], ['del', 'Hapus']].forEach(([k, label]) => {
+        if (!k) return;
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'btn btn-ghost btn-small'; b.dataset.nact = k; b.dataset.id = n.id; b.textContent = label;
+        b.setAttribute('aria-label', `${label} nota ${n.no}`);
+        right.append(b);
+      });
+      li.append(main, right);
+      list.append(li);
+    });
+  }
+
+  function addToDraft(f) {
+    const cleared = state.sample;
+    if (cleared) clearSample();
+    const same = state.draft.items.find((it) => it.name.toLowerCase() === f.name.toLowerCase() && it.price === f.price && it.unit === f.unit);
+    if (same) same.qty = Math.round((same.qty + f.qty) * 1000) / 1000;
+    else state.draft.items.push({ id: uid(), time: nowLocal(), name: f.name, unit: f.unit, price: f.price, qty: f.qty, sample: false, nota: '' });
+    save(); render();
+    if (cleared) toast(`Data contoh dikosongkan. ${f.name} masuk ke nota.`);
+  }
+  function kError(msg, el) {
+    const box = $('kError');
+    $('kName').removeAttribute('aria-invalid'); $('kQty').removeAttribute('aria-invalid'); $('kPriceWrap').removeAttribute('data-invalid');
+    if (!msg) { box.hidden = true; box.textContent = ''; return; }
+    box.textContent = msg; box.hidden = false;
+    if (el) { if (el.id === 'kPrice') $('kPriceWrap').dataset.invalid = 'true'; else el.setAttribute('aria-invalid', 'true'); el.focus(); }
+  }
+  $('kItemForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = $('kName').value.trim().replace(/\s+/g, ' ');
+    const price = parseMoney($('kPrice').value);
+    const qty = parseQty($('kQty').value);
+    if (!name) return kError('Isi nama menu atau barang yang dibeli customer.', $('kName'));
+    if (price <= 0) return kError('Isi harga per item, lebih dari Rp 0.', $('kPrice'));
+    if (!(qty > 0)) return kError('Isi qty lebih dari 0.', $('kQty'));
+    kError('');
+    const last = lastSale(name);
+    const cat = MENU.find(([n]) => n.toLowerCase() === name.toLowerCase());
+    addToDraft({ name, price, qty, unit: (last && last.unit) || (cat && cat[1]) || '' });
+    $('kName').value = ''; $('kPrice').value = ''; $('kQty').value = '1';
+    $('kName').focus();
+  });
+  $('kName').addEventListener('input', (e) => {
+    const name = e.target.value.trim();
+    if (!name || parseMoney($('kPrice').value)) return;
+    const last = lastSale(name);
+    if (last) $('kPrice').value = last.price.toLocaleString('id-ID');
+  });
+  $('kPrice').addEventListener('input', (e) => formatMoneyInput(e.target));
+  $('kQty').addEventListener('input', (e) => sanitizeQty(e.target));
+  $('kChips').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-name]');
+    if (!b) return;
+    addToDraft({ name: b.dataset.name, price: Number(b.dataset.price), unit: b.dataset.unit, qty: 1 });
+  });
+  $('kCart').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-k]');
+    if (!b) return;
+    const items = state.draft.items;
+    const idx = items.findIndex((it) => it.id === b.dataset.id);
+    if (idx < 0) return;
+    const it = items[idx];
+    if (b.dataset.k === 'inc') it.qty = Math.round((it.qty + 1) * 1000) / 1000;
+    else if (b.dataset.k === 'dec') { if (it.qty > 1) it.qty = Math.round((it.qty - 1) * 1000) / 1000; else items.splice(idx, 1); }
+    else items.splice(idx, 1);
+    save(); render();
+  });
+  $('kCustomer').addEventListener('input', (e) => { state.draft.customer = e.target.value; save(); render(); });
+  $('kMethod').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-method]');
+    if (!b) return;
+    state.draft.method = b.dataset.method;
+    save(); render();
+  });
+  $('kPaid').addEventListener('input', (e) => { formatMoneyInput(e.target); state.draft.paid = parseMoney(e.target.value); save(); render(); });
+  $('kCash').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-cash]');
+    if (!b) return;
+    state.draft.paid = b.dataset.cash === 'exact' ? sumOf(state.draft.items) : Number(b.dataset.cash);
+    save(); render();
+  });
+  $('kRecord').addEventListener('change', (e) => { state.shop.autoRecord = e.target.checked; save(); });
+  document.querySelectorAll('[data-shop]').forEach((el) => {
+    el.addEventListener(el.type === 'checkbox' || el.tagName === 'SELECT' ? 'change' : 'input', () => {
+      state.shop[el.dataset.shop] = el.type === 'checkbox' ? el.checked : el.value;
+      save(); render();
+    });
+  });
+  $('kClear').addEventListener('click', () => {
+    const prev = state.draft;
+    state.draft = emptyDraft();
+    save(); render();
+    toast('Nota dikosongkan', { label: 'Urungkan', fn: () => { state.draft = prev; save(); render(); } });
+  });
+
+  function printNota(n) {
+    const area = $('printArea');
+    area.className = state.shop.paper === '80' ? 'w80' : 'w58';
+    area.innerHTML = `<div class="receipt">${receiptHTML(n)}</div>`;
+    const go = () => {
+      try { window.print(); } catch (e) { kNote('Browser ini tidak bisa membuka jendela cetak. Simpan nota sebagai gambar lalu cetak dari galeri.', 'bad'); }
+    };
+    const img = area.querySelector('img');
+    if (img && !img.complete) { img.onload = img.onerror = go; } else go();
+  }
+  async function downloadNota(n) {
+    try {
+      const blob = await buildNotaImage(n);
+      await saveFile(`nota_${n.no}.png`, blob, kNote);
+    } catch (e) {
+      console.error(e);
+      kNote('Gambar nota gagal dibuat. Coba lagi.', 'bad');
+    }
+  }
+  function saveNota(mode) {
+    const d = state.draft;
+    if (d.sample) { kNote('Ini nota contoh. Tambahkan menu pesanan customer Anda dulu.', 'bad'); return; }
+    if (!d.items.length) { kNote('Tambahkan minimal satu menu ke nota.', 'bad'); return; }
+    const total = sumOf(d.items);
+    if (d.method === 'Tunai' && d.paid > 0 && d.paid < total) {
+      kNote(`Uang diterima kurang ${rupiah(total - d.paid)}. Periksa lagi sebelum menyimpan nota.`, 'bad');
+      $('kPaid').focus();
+      return;
+    }
+    const time = nowLocal();
+    const nota = {
+      id: uid(), no: nextNotaNo(time), time, customer: d.customer.trim(), method: d.method,
+      paid: d.method === 'Tunai' ? (d.paid > 0 ? d.paid : total) : total,
+      items: d.items.map((it) => ({ ...it, time })), saleIds: []
+    };
+    if (state.shop.autoRecord) {
+      nota.items.forEach((it) => {
+        const id = uid();
+        nota.saleIds.push(id);
+        state.sales.push({ id, time, name: it.name, unit: it.unit, price: it.price, qty: it.qty, sample: false, nota: nota.no });
+      });
+    }
+    state.notas.push(nota);
+    if (state.notas.length > 300) state.notas.splice(0, state.notas.length - 300);
+    state.draft = emptyDraft();
+    save(); render();
+    kNote(`Nota ${nota.no} disimpan${state.shop.autoRecord ? ' dan tercatat di daftar penjualan' : ''}.`, 'good');
+    toast(`Nota ${nota.no} disimpan · ${rupiah(total)}`);
+    if (mode === 'print') printNota(nota); else downloadNota(nota);
+  }
+  $('kPrint').addEventListener('click', () => saveNota('print'));
+  $('kImage').addEventListener('click', () => saveNota('image'));
+  function deleteNota(id) {
+    const idx = state.notas.findIndex((n) => n.id === id);
+    if (idx < 0) return;
+    const [n] = state.notas.splice(idx, 1);
+    const removed = [];
+    state.sales = state.sales.filter((it) => { if (n.saleIds.includes(it.id)) { removed.push(it); return false; } return true; });
+    save(); render();
+    toast(`Nota ${n.no} dihapus${removed.length ? ` beserta ${removed.length} baris penjualannya` : ''}`, {
+      label: 'Urungkan', fn: () => { state.notas.splice(idx, 0, n); state.sales.push(...removed); save(); render(); }
+    });
+  }
+  $('notaList').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-nact]');
+    if (!b) return;
+    const n = state.notas.find((x) => x.id === b.dataset.id);
+    if (!n) return;
+    if (b.dataset.nact === 'print') printNota(n);
+    else if (b.dataset.nact === 'image') { kNote(''); downloadNota(n); }
+    else deleteNota(n.id);
+  });
+
+  async function buildNotaImage(n) {
+    await fontsReady();
+    const sh = state.shop, T = notaTotals(n);
+    const W = sh.paper === '80' ? 576 : 384, P = 22, inner = W - P * 2, SCALE = 2, INK = '#141414';
+    const logo = sh.showLogo ? await logoImage() : null;
+    const m = document.createElement('canvas').getContext('2d');
+    const F = {
+      mono: (w, px) => `${w} ${px}px ${FONT.mono}`,
+      body: (w, px) => `${w} ${px}px ${FONT.body}`,
+      disp: (w, px) => `${w} ${px}px ${FONT.display}`
+    };
+    const ops = [];
+    let y = P;
+    const text = (str, font, align, lh) => {
+      m.font = font;
+      wrapText(m, str, inner, 6).forEach((ln) => {
+        const yy = y;
+        ops.push((c) => { c.font = font; c.textAlign = align; c.fillText(ln, align === 'center' ? W / 2 : P, yy + lh * 0.74); });
+        y += lh;
+      });
+    };
+    const kv = (l, r, font, lh, indent = 0) => {
+      const yy = y;
+      ops.push((c) => {
+        c.font = font;
+        c.textAlign = 'right'; c.fillText(r, W - P, yy + lh * 0.74);
+        const room = inner - indent - c.measureText(r).width - 10;
+        c.textAlign = 'left';
+        let s = l;
+        while (s.length > 1 && c.measureText(s).width > room) s = s.slice(0, -1);
+        c.fillText(s === l ? l : s.trimEnd() + '…', P + indent, yy + lh * 0.74);
+      });
+      y += lh;
+    };
+    const dash = () => {
+      const yy = y + 9;
+      ops.push((c) => { c.strokeStyle = INK; c.lineWidth = 1.2; c.setLineDash([5, 4]); c.beginPath(); c.moveTo(P, yy); c.lineTo(W - P, yy); c.stroke(); c.setLineDash([]); });
+      y += 18;
+    };
+    if (logo) {
+      const sz = W === 576 ? 190 : 150, yy = y;
+      ops.push((c) => c.drawImage(logo, (W - sz) / 2, yy, sz, sz));
+      y += sz + 8;
+    }
+    text(sh.name, F.disp(800, 26), 'center', 32);
+    if (sh.tagline) text(sh.tagline, F.body(600, 15), 'center', 21);
+    if (sh.address) text(sh.address, F.mono(400, 13), 'center', 19);
+    if (sh.phone) text(`Telp/WA ${sh.phone}`, F.mono(400, 13), 'center', 19);
+    dash();
+    kv('No. nota', n.no, F.mono(400, 14), 21);
+    kv('Tanggal', fmtNotaTime(n.time), F.mono(400, 14), 21);
+    if (n.customer) text(`Customer: ${n.customer}`, F.mono(400, 14), 'left', 21);
+    dash();
+    n.items.forEach((it) => {
+      text(it.name, F.body(600, 16), 'left', 22);
+      kv(`${qtyText(it.qty)}${it.unit ? ' ' + it.unit : ''} x ${num(it.price)}`, num(subtotal(it)), F.mono(400, 14), 21, 10);
+      y += 4;
+    });
+    dash();
+    kv('TOTAL', rupiah(T.total), F.mono(700, 18), 27);
+    if (T.cash) { kv('Tunai', rupiah(T.paid), F.mono(400, 14), 21); kv('Kembalian', rupiah(T.change), F.mono(400, 14), 21); }
+    else kv(n.method, rupiah(T.total), F.mono(400, 14), 21);
+    dash();
+    sh.footer.split('\n').map((s) => s.trim()).filter(Boolean).forEach((ln) => text(ln, F.body(500, 14), 'center', 20));
+    y += P;
+
+    const cv = document.createElement('canvas');
+    cv.width = W * SCALE; cv.height = Math.ceil(y * SCALE);
+    const ctx = cv.getContext('2d');
+    ctx.scale(SCALE, SCALE);
+    ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, y);
+    ctx.fillStyle = INK; ctx.textBaseline = 'alphabetic';
+    ops.forEach((op) => op(ctx));
+    return new Promise((res, rej) => cv.toBlob((b) => (b ? res(b) : rej(new Error('toBlob gagal'))), 'image/png'));
+  }
 
   /* ---------- Toast & notes ---------- */
   let toastTimer = null;

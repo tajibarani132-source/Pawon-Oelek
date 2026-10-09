@@ -8,6 +8,7 @@ Aplikasi web sederhana untuk pembukuan harian warung Pawon Oelek.
   - Sisa modal = modal − total belanja
   - Laba kotor = total penjualan − total belanja
   - Uang kas akhir = sisa modal + total penjualan
+- **Nota customer:** susun pesanan satu customer (menu, qty, harga), pilih pembayaran Tunai/QRIS/Transfer, hitung kembalian, lalu **cetak nota** (printer thermal 58 mm/80 mm atau printer biasa) atau **simpan sebagai gambar** untuk dikirim lewat WhatsApp. Nota bernomor otomatis (PO-YYMMDD-001), bisa dicetak ulang, dan langsung tercatat ke daftar penjualan.
 - **Histori:** simpan penghitungan hari ini, lalu buka lagi, unduh ulang, hapus, atau unduh rekap semua histori ke Excel.
 - **Unduh laporan** sebagai **gambar (JPEG)** atau **Microsoft Excel (.xlsx)**. Di file Excel, subtotal, total, sisa modal, laba kotor, dan uang kas akhir memakai rumus.
 
