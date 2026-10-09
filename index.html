@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Buku belanja warung Pawon Oelek: catat waktu, barang, harga dan kuantiti, hitung sisa modal, unduh laporan JPEG atau Excel.">
+<meta name="description" content="Buku warung Pawon Oelek: catat belanja dan penjualan, hitung sisa modal, laba kotor, dan uang kas akhir, lalu unduh laporan JPEG atau Excel.">
 <meta name="theme-color" content="#C4231B">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 56 56%22%3E%3Crect x=%2230%22 y=%223%22 width=%228%22 height=%2227%22 rx=%224%22 transform=%22rotate(32 34 16)%22 fill=%22%235C6459%22/%3E%3Cpath d=%22M5 30 A23 15 0 0 0 51 30 Z%22 fill=%22%231F231E%22/%3E%3Cellipse cx=%2228%22 cy=%2230%22 rx=%2223%22 ry=%224.5%22 fill=%22%23C4231B%22/%3E%3Cpath d=%22M18 44 h20 l-2.5 6 h-15 z%22 fill=%22%231F231E%22/%3E%3C/svg%3E">
 <title>Pawon Oelek</title>
@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <style>
-/* Layout: a market-day workbench. Entry form and ledger on the left, a receipt-style "nota" pinned on the right; one column on phones with the nota first. */
+/* Layout: a market-day workbench. Belanja/Penjualan switch, entry form and ledger on the left; a receipt-style "nota" pinned on the right; one column on phones with the nota first. */
 :root{
   --bg:#ECEEE9;
   --surface:#FFFFFF;
@@ -66,23 +66,33 @@ h1 .accent{color:var(--chili)}
 
 /* Sample banner */
 .sample{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);color:var(--ink);border-radius:var(--radius);padding:12px 16px;margin-block-end:20px}
-.sample p{margin:0;max-width:65ch}
+.sample p{margin:0;max-width:68ch}
 .sample strong{color:var(--warn)}
 
 /* Grid */
-.grid{display:grid;gap:20px;grid-template-columns:minmax(0,1fr) minmax(300px,370px);grid-template-areas:"entry nota" "ledger nota";align-items:start}
-.entry{grid-area:entry}
-.ledger{grid-area:ledger}
-.nota{grid-area:nota;position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}
+.grid{display:grid;gap:20px;grid-template-columns:minmax(0,1fr) minmax(300px,370px);align-items:start}
+.work{display:flex;flex-direction:column;gap:20px;min-width:0}
+.nota{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);max-height:calc(100vh - 32px);overflow-y:auto;overscroll-behavior:contain}
 @media (max-width:900px){
-  .grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"nota" "entry" "ledger"}
-  .nota{position:static}
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .nota{order:-1;position:static;max-height:none;overflow:visible}
 }
 
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;min-width:0}
 h2{font-family:var(--font-display);font-weight:700;font-size:1.3rem;line-height:1.15;letter-spacing:-.01em;margin:0}
-.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-block-end:16px}
+.panel-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;margin-block-end:16px}
+.panel-head.flush{margin:0}
 .panel-head .hint{margin:0;color:var(--muted);font-size:.85rem}
+
+/* Belanja / Penjualan switch */
+.switch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+.switch button{font:inherit;text-align:left;border:0;border-radius:8px;padding:10px 14px;background:transparent;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;gap:2px;min-height:58px;min-width:0}
+.switch button:hover{background:var(--surface-2)}
+.switch .s-name{font-family:var(--font-display);font-weight:700;font-size:1.08rem;line-height:1.2}
+.switch .s-meta{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.switch button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.switch button[aria-pressed="true"] .s-meta{color:inherit;opacity:.78}
+.switch button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 
 /* Form */
 #itemForm{display:grid;gap:14px;grid-template-columns:repeat(6,minmax(0,1fr))}
@@ -135,22 +145,27 @@ input[aria-invalid="true"],.money[data-invalid="true"]{border-color:var(--bad)}
 .nota .money{background:var(--surface)}
 .nota .money input{font-size:1.25rem;font-weight:600}
 .lines{margin:0;display:flex;flex-direction:column;gap:8px;font-variant-numeric:tabular-nums}
-.lines div{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
-.lines dt{color:var(--muted);font-weight:600}
+.lines > div{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.lines dt{color:var(--muted);font-weight:600;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
 .lines dd{margin:0;font-family:var(--font-mono);font-weight:600;white-space:nowrap}
+.lines .profit dd{font-size:1.2rem;font-weight:700;color:var(--tone)}
+.lines .cash dt{color:var(--ink);font-weight:700}
+.lines .cash dd{font-weight:700}
+.section-label{margin:0;font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .rule{border:0;border-top:2px dashed var(--line);margin:0}
-.result{--tone:var(--muted);--tone-soft:var(--surface-2);display:flex;flex-direction:column;gap:6px}
-.result[data-state="good"]{--tone:var(--good);--tone-soft:var(--good-soft)}
-.result[data-state="warn"]{--tone:var(--warn);--tone-soft:var(--warn-soft)}
-.result[data-state="bad"]{--tone:var(--bad);--tone-soft:var(--bad-soft)}
+.toned{--tone:var(--muted);--tone-soft:var(--surface-2)}
+.toned[data-state="good"]{--tone:var(--good);--tone-soft:var(--good-soft)}
+.toned[data-state="warn"]{--tone:var(--warn);--tone-soft:var(--warn-soft)}
+.toned[data-state="bad"]{--tone:var(--bad);--tone-soft:var(--bad-soft)}
+.result{display:flex;flex-direction:column;gap:6px}
 .result-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.pill{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:999px;color:var(--tone);background:var(--tone-soft);white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:999px;color:var(--tone);background:var(--tone-soft);white-space:nowrap;font-family:var(--font-body)}
 .pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--tone)}
 .result strong{font-family:var(--font-display);font-weight:800;font-size:clamp(2rem,5vw,2.5rem);line-height:1.05;letter-spacing:-.02em;color:var(--tone);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.result .formula-note{margin:0;color:var(--muted);font-size:.8rem;font-family:var(--font-mono)}
 .meter{height:8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
 .meter i{display:block;height:100%;width:0;background:var(--tone);border-radius:inherit;transition:width .3s ease}
 .meter-cap{margin:0;color:var(--muted);font-size:.82rem;font-variant-numeric:tabular-nums}
+.formula-cap{margin:0;color:var(--muted);font-size:.78rem;font-family:var(--font-mono);line-height:1.45}
 .exports{display:grid;gap:10px}
 .export-note{margin:0;font-size:.85rem;color:var(--muted);min-height:1.3em}
 .export-note[data-tone="good"]{color:var(--good)}
@@ -177,7 +192,7 @@ tr.editing td{background:var(--warn-soft)}
 tfoot td{font-weight:800;border-bottom:0;border-top:2px solid var(--ink);padding-top:14px}
 tfoot .num{font-size:1.05rem}
 .empty{border:2px dashed var(--line);border-radius:var(--radius);padding:28px 20px;text-align:center;color:var(--muted)}
-.empty p{margin:0 auto;max-width:44ch}
+.empty p{margin:0 auto;max-width:46ch}
 .empty strong{display:block;color:var(--ink);font-size:1rem;margin-block-end:4px}
 
 @media (max-width:640px){
@@ -199,6 +214,27 @@ tfoot .num{font-size:1.05rem}
   .ledger tfoot td:empty{display:none}
 }
 
+/* Save + history */
+.save-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}
+.save-state{margin:-6px 0 0;font-size:.82rem;color:var(--muted)}
+.save-state[data-tone="good"]{color:var(--good)}
+.save-state[data-tone="warn"]{color:var(--warn)}
+.hist-sum{margin:0 0 14px;color:var(--muted);font-size:.88rem;font-variant-numeric:tabular-nums}
+.hist-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.hist-item{border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;background:var(--surface);min-width:0}
+.hist-item[data-current="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.hi-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.hi-head h3{margin:0;font-family:var(--font-display);font-weight:700;font-size:1.05rem;line-height:1.25}
+.hi-meta{margin:2px 0 0;color:var(--muted);font-size:.8rem;font-variant-numeric:tabular-nums}
+.chip{display:inline-block;font-family:var(--font-body);font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line);margin-inline-start:6px;vertical-align:middle}
+.chip.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.hi-stats{margin:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 16px;font-variant-numeric:tabular-nums}
+.hi-stats dt{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hi-stats dd{margin:0;font-family:var(--font-mono);font-weight:600;font-size:.92rem;white-space:nowrap}
+.hi-stats .tone{color:var(--tone);font-weight:700}
+.hi-acts{display:flex;flex-wrap:wrap;gap:6px}
+@media (max-width:560px){.hi-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 .footnote{margin-block-start:28px;color:var(--muted);font-size:.84rem;max-width:72ch}
 .footnote p{margin:0 0 6px}
 
@@ -207,8 +243,9 @@ tfoot .num{font-size:1.05rem}
 .toast-btn{font:inherit;font-weight:800;background:none;border:0;color:var(--chili);cursor:pointer;padding:6px 8px;border-radius:6px;white-space:nowrap}
 .toast-btn:focus-visible{outline:2px solid var(--focus)}
 .phonebar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:none;align-items:center;justify-content:space-between;gap:12px;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.08);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+.pb-vals{display:flex;gap:18px;min-width:0}
 .phonebar .pb-label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.phonebar .pb-value{font-family:var(--font-mono);font-weight:700;font-size:1.1rem;font-variant-numeric:tabular-nums}
+.phonebar .pb-value{font-family:var(--font-mono);font-weight:700;font-size:1.02rem;font-variant-numeric:tabular-nums;white-space:nowrap}
 .phonebar .pb-value[data-neg="true"]{color:var(--bad)}
 @media (max-width:900px){
   .phonebar.show{display:flex}
@@ -218,7 +255,6 @@ tfoot .num{font-size:1.05rem}
   *{transition:none!important;scroll-behavior:auto!important}
 }
 </style>
-
 </head>
 <body>
 <div class="app">
@@ -232,63 +268,126 @@ tfoot .num{font-size:1.05rem}
       </svg>
       <div>
         <h1>Pawon <span class="accent">Oelek</span></h1>
-        <p class="tagline">Buku belanja warung</p>
+        <p class="tagline">Buku belanja &amp; penjualan warung</p>
       </div>
     </div>
     <p class="today" id="today"></p>
   </header>
 
   <div class="sample" id="sampleBanner" hidden>
-    <p><strong>Ini data contoh.</strong> Angka di bawah hanya peragaan. Begitu Anda mencatat barang pertama, contoh ini otomatis dikosongkan.</p>
+    <p><strong>Ini data contoh.</strong> Angka belanja dan penjualan di bawah hanya peragaan. Begitu Anda mencatat data pertama, contoh ini otomatis dikosongkan.</p>
     <button type="button" class="btn btn-ghost btn-small" id="clearSample">Kosongkan sekarang</button>
   </div>
 
   <main class="grid">
-    <section class="panel entry" aria-labelledby="entryTitle">
-      <div class="panel-head">
-        <h2 id="entryTitle">Catat belanja</h2>
-        <p class="hint" id="entryHint">Satu baris untuk satu jenis barang</p>
+    <div class="work">
+      <div class="switch" role="group" aria-label="Pilih buku">
+        <button type="button" id="tabBelanja" data-view="belanja" aria-pressed="true">
+          <span class="s-name">Belanja</span>
+          <span class="s-meta" id="metaBelanja">0 barang · Rp 0</span>
+        </button>
+        <button type="button" id="tabPenjualan" data-view="penjualan" aria-pressed="false">
+          <span class="s-name">Penjualan</span>
+          <span class="s-meta" id="metaPenjualan">0 item · Rp 0</span>
+        </button>
+        <button type="button" id="tabHistori" data-view="histori" aria-pressed="false">
+          <span class="s-name">Histori</span>
+          <span class="s-meta" id="metaHistori">0 tersimpan</span>
+        </button>
       </div>
-      <form id="itemForm" novalidate>
-        <div class="field f-time">
-          <label for="fTime">Waktu pembelian</label>
-          <input type="datetime-local" id="fTime" required>
+
+      <section class="panel entry" id="entryPanel" aria-labelledby="entryTitle">
+        <div class="panel-head">
+          <h2 id="entryTitle">Catat belanja</h2>
+          <p class="hint" id="entryHint">Satu baris untuk satu jenis barang</p>
         </div>
-        <div class="field f-name">
-          <label for="fName">Jenis barang</label>
-          <input id="fName" list="itemList" autocomplete="off" maxlength="120" placeholder="mis. Cabai rawit">
+        <form id="itemForm" novalidate>
+          <div class="field f-time">
+            <label for="fTime" id="lTime">Waktu pembelian</label>
+            <input type="datetime-local" id="fTime" required>
+          </div>
+          <div class="field f-name">
+            <label for="fName" id="lName">Jenis barang</label>
+            <input id="fName" list="itemList" autocomplete="off" maxlength="120" placeholder="mis. Cabai rawit">
+          </div>
+          <div class="field f-price">
+            <label for="fPrice" id="lPrice">Harga per item</label>
+            <div class="money" id="fPriceWrap"><span>Rp</span><input id="fPrice" inputmode="numeric" autocomplete="off" placeholder="0"></div>
+          </div>
+          <div class="field f-qty">
+            <label for="fQty">Kuantiti</label>
+            <input id="fQty" inputmode="decimal" autocomplete="off" placeholder="1" value="1">
+          </div>
+          <div class="field f-unit">
+            <label for="fUnit">Satuan</label>
+            <input id="fUnit" list="unitList" autocomplete="off" maxlength="24" placeholder="kg">
+          </div>
+          <div class="calc" aria-live="polite">
+            <span class="label">Harga × kuantiti</span>
+            <output id="fSubtotal" for="fPrice fQty">Rp 0</output>
+            <span class="formula" id="fFormula">Rp 0 × 1</span>
+          </div>
+          <p class="form-error" id="formError" role="alert" hidden></p>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="submitBtn">Tambah ke daftar belanja</button>
+            <button type="button" class="btn btn-ghost" id="cancelEdit" hidden>Batal ubah</button>
+          </div>
+        </form>
+        <datalist id="itemList"></datalist>
+        <datalist id="menuList"></datalist>
+        <datalist id="unitList"></datalist>
+      </section>
+
+      <section class="panel ledger" id="ledgerPanel" aria-labelledby="ledgerTitle">
+        <div class="panel-head">
+          <h2 id="ledgerTitle">Daftar belanja</h2>
+          <div style="display:flex;gap:8px">
+            <button type="button" class="btn btn-ghost btn-small" id="resetCancel" hidden>Batal</button>
+            <button type="button" class="btn btn-ghost btn-small" id="resetBtn">Hapus semua</button>
+          </div>
         </div>
-        <div class="field f-price">
-          <label for="fPrice">Harga per item</label>
-          <div class="money" id="fPriceWrap"><span>Rp</span><input id="fPrice" inputmode="numeric" autocomplete="off" placeholder="0"></div>
+        <div class="table-wrap" id="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">No</th>
+                <th scope="col">Waktu</th>
+                <th scope="col" id="thName">Barang</th>
+                <th scope="col" class="num" id="thPrice">Harga / item</th>
+                <th scope="col" class="num">Qty</th>
+                <th scope="col" class="num">Subtotal</th>
+                <th scope="col"><span class="sr-only">Aksi</span></th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+            <tfoot>
+              <tr><td colspan="5" id="tLabel">Total belanja</td><td class="num" id="tTotal">Rp 0</td><td></td></tr>
+            </tfoot>
+          </table>
         </div>
-        <div class="field f-qty">
-          <label for="fQty">Kuantiti</label>
-          <input id="fQty" inputmode="decimal" autocomplete="off" placeholder="1" value="1">
+        <div class="empty" id="emptyState" hidden>
+          <p><strong id="emptyTitle">Belum ada belanja tercatat</strong><span id="emptyText"></span></p>
         </div>
-        <div class="field f-unit">
-          <label for="fUnit">Satuan</label>
-          <input id="fUnit" list="unitList" autocomplete="off" maxlength="24" placeholder="kg">
+      </section>
+
+      <section class="panel history" id="historyPanel" aria-labelledby="historyTitle" hidden>
+        <div class="panel-head">
+          <h2 id="historyTitle">Histori penghitungan</h2>
+          <button type="button" class="btn btn-ghost btn-small" id="recapBtn">Unduh rekap (Excel)</button>
         </div>
-        <div class="calc" aria-live="polite">
-          <span class="label">Harga × kuantiti</span>
-          <output id="fSubtotal" for="fPrice fQty">Rp 0</output>
-          <span class="formula" id="fFormula">Rp 0 × 1</span>
+        <p class="hist-sum" id="histSum"></p>
+        <ol class="hist-list" id="histList"></ol>
+        <div class="empty" id="histEmpty" hidden>
+          <p><strong>Belum ada histori</strong>Tekan <em>Simpan ke histori</em> di bagian Hasil hitung untuk menyimpan penghitungan hari ini. Histori bisa dibuka lagi, diunduh ulang, atau direkap.</p>
         </div>
-        <p class="form-error" id="formError" role="alert" hidden></p>
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary" id="submitBtn">Tambah ke daftar</button>
-          <button type="button" class="btn btn-ghost" id="cancelEdit" hidden>Batal ubah</button>
-        </div>
-      </form>
-      <datalist id="itemList"></datalist>
-      <datalist id="unitList"></datalist>
-    </section>
+        <p class="export-note" id="histNote" role="status"></p>
+      </section>
+    </div>
 
     <aside class="panel nota" id="nota" aria-labelledby="notaTitle">
-      <div class="panel-head" style="margin:0">
+      <div class="panel-head flush">
         <h2 id="notaTitle">Hasil hitung</h2>
-        <p class="hint">Modal − total belanja</p>
+        <p class="hint" id="notaPeriod"></p>
       </div>
       <div class="field">
         <label for="fModal">Modal yang dimiliki</label>
@@ -299,7 +398,7 @@ tfoot .num{font-size:1.05rem}
         <div><dt>Total belanja · <span id="oCount">0 barang</span></dt><dd id="oTotal">Rp 0</dd></div>
       </dl>
       <hr class="rule">
-      <div class="result" id="oResult" data-state="idle">
+      <div class="result toned" id="oResult" data-state="idle">
         <div class="result-top">
           <span class="label">Sisa modal</span>
           <span class="pill" id="oPill">Belum ada belanja</span>
@@ -308,6 +407,19 @@ tfoot .num{font-size:1.05rem}
         <div class="meter" aria-hidden="true"><i id="oMeter"></i></div>
         <p class="meter-cap" id="oMeterCap">Isi modal untuk melihat berapa persen yang terpakai.</p>
       </div>
+      <hr class="rule">
+      <p class="section-label">Penjualan</p>
+      <dl class="lines">
+        <div><dt>Total penjualan · <span id="oSaleCount">0 item</span></dt><dd id="oSales">Rp 0</dd></div>
+        <div class="profit toned" id="oProfitRow" data-state="idle"><dt>Laba kotor <span class="pill" id="oProfitPill">Belum ada penjualan</span></dt><dd id="oProfit">—</dd></div>
+        <div class="cash"><dt>Uang kas akhir</dt><dd id="oCash">Rp 0</dd></div>
+      </dl>
+      <p class="formula-cap">Laba kotor = penjualan − belanja<br>Uang kas akhir = sisa modal + penjualan</p>
+      <div class="save-row">
+        <button type="button" class="btn btn-ghost" id="saveHist">Simpan ke histori</button>
+        <button type="button" class="btn btn-ghost" id="newBook">Buku baru</button>
+      </div>
+      <p class="save-state" id="saveState"></p>
       <div class="exports">
         <button type="button" class="btn btn-primary" id="dlJpg">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg>
@@ -320,48 +432,20 @@ tfoot .num{font-size:1.05rem}
       </div>
       <p class="export-note" id="exportNote" role="status"></p>
     </aside>
-
-    <section class="panel ledger" aria-labelledby="ledgerTitle">
-      <div class="panel-head">
-        <h2 id="ledgerTitle">Daftar belanja</h2>
-        <div style="display:flex;gap:8px">
-          <button type="button" class="btn btn-ghost btn-small" id="resetCancel" hidden>Batal</button>
-          <button type="button" class="btn btn-ghost btn-small" id="resetBtn">Hapus semua</button>
-        </div>
-      </div>
-      <div class="table-wrap" id="tableWrap">
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">No</th>
-              <th scope="col">Waktu</th>
-              <th scope="col">Barang</th>
-              <th scope="col" class="num">Harga / item</th>
-              <th scope="col" class="num">Qty</th>
-              <th scope="col" class="num">Subtotal</th>
-              <th scope="col"><span class="sr-only">Aksi</span></th>
-            </tr>
-          </thead>
-          <tbody id="rows"></tbody>
-          <tfoot>
-            <tr><td colspan="5">Total belanja</td><td class="num" id="tTotal">Rp 0</td><td></td></tr>
-          </tfoot>
-        </table>
-      </div>
-      <div class="empty" id="emptyState" hidden>
-        <p><strong>Belum ada belanja tercatat</strong>Isi waktu, jenis barang, harga per item, dan kuantiti di atas, lalu tekan <em>Tambah ke daftar</em>.</p>
-      </div>
-    </section>
   </main>
 
   <footer class="footnote">
     <p>Catatan tersimpan di browser perangkat ini saja dan tidak dikirim ke mana pun. Unduh Excel untuk arsip atau untuk dibuka di perangkat lain.</p>
-    <p>Di file Excel, subtotal, total belanja, dan sisa modal memakai rumus, jadi angkanya ikut berubah bila harga atau kuantiti diubah di Excel.</p>
+    <p>Histori penghitungan juga tersimpan di browser ini. Hapus data browser berarti histori ikut hilang, jadi unduh rekap Excel secara berkala.</p>
+    <p>Laporan JPEG dan Excel memuat belanja dan penjualan sekaligus. Di Excel, subtotal, total, sisa modal, laba kotor, dan uang kas akhir memakai rumus, jadi angkanya ikut berubah bila data diubah di Excel.</p>
   </footer>
 </div>
 
 <div class="phonebar" id="phonebar">
-  <div><span class="pb-label">Sisa modal</span><span class="pb-value" id="pbValue">Rp 0</span></div>
+  <div class="pb-vals">
+    <div><span class="pb-label">Sisa modal</span><span class="pb-value" id="pbValue">Rp 0</span></div>
+    <div><span class="pb-label">Laba kotor</span><span class="pb-value" id="pbProfit">—</span></div>
+  </div>
   <button type="button" class="btn btn-ghost btn-small" id="pbJump">Lihat hasil</button>
 </div>
 <div class="toast" id="toast" role="status" hidden></div>
@@ -382,8 +466,14 @@ tfoot .num{font-size:1.05rem}
     ['Air galon', 'galon'], ['Es batu', 'bungkus'], ['Kerupuk', 'bungkus'], ['Daun jeruk', 'ikat'],
     ['Serai', 'ikat'], ['Kemangi', 'ikat'], ['Timun', 'kg'], ['Kol', 'kg'], ['Jeruk nipis', 'kg']
   ];
-  const UNITS = ['kg', 'ons', 'gram', 'liter', 'butir', 'buah', 'ikat', 'bungkus', 'papan', 'ekor', 'tabung', 'botol', 'galon', 'pcs', 'porsi', 'karung', 'dus'];
-  const SAMPLE = [
+  const MENU = [
+    ['Ayam penyet', 'porsi'], ['Lele penyet', 'porsi'], ['Tempe penyet', 'porsi'], ['Tahu penyet', 'porsi'],
+    ['Telur penyet', 'porsi'], ['Paket nasi ayam', 'paket'], ['Nasi putih', 'porsi'], ['Nasi tambah', 'porsi'],
+    ['Es teh manis', 'gelas'], ['Teh hangat', 'gelas'], ['Es jeruk', 'gelas'], ['Kopi hitam', 'gelas'],
+    ['Air mineral', 'botol'], ['Kerupuk', 'bungkus'], ['Sambal oelek botol', 'botol']
+  ];
+  const UNITS = ['kg', 'ons', 'gram', 'liter', 'butir', 'buah', 'ikat', 'bungkus', 'papan', 'ekor', 'tabung', 'botol', 'galon', 'pcs', 'porsi', 'paket', 'gelas', 'karung', 'dus'];
+  const SAMPLE_BUY = [
     ['06:05', 'Beras', 'kg', 14500, 10],
     ['06:12', 'Cabai rawit', 'kg', 62000, 1],
     ['06:12', 'Bawang merah', 'kg', 38000, 2],
@@ -393,6 +483,49 @@ tfoot .num{font-size:1.05rem}
     ['06:41', 'Ayam potong', 'ekor', 42000, 4],
     ['07:02', 'Gas LPG 3 kg', 'tabung', 22000, 2]
   ];
+  const SAMPLE_SALE = [
+    ['11:30', 'Ayam penyet', 'porsi', 18000, 25],
+    ['11:45', 'Lele penyet', 'porsi', 15000, 12],
+    ['12:05', 'Tempe penyet', 'porsi', 10000, 10],
+    ['12:15', 'Nasi tambah', 'porsi', 4000, 8],
+    ['12:30', 'Es teh manis', 'gelas', 4000, 35],
+    ['13:10', 'Sambal oelek botol', 'botol', 25000, 3]
+  ];
+  const SAMPLE_HISTORY = [
+    {
+      days: 1, saved: '20:15', modal: 1000000,
+      buys: [['06:02', 'Beras', 'kg', 14500, 10], ['06:10', 'Cabai rawit', 'kg', 60000, 1], ['06:10', 'Bawang merah', 'kg', 38000, 2],
+        ['06:30', 'Minyak goreng', 'liter', 18000, 5], ['06:40', 'Ayam potong', 'ekor', 42000, 4], ['06:55', 'Gas LPG 3 kg', 'tabung', 22000, 1]],
+      sales: [['11:40', 'Ayam penyet', 'porsi', 18000, 22], ['12:00', 'Lele penyet', 'porsi', 15000, 10], ['12:10', 'Tempe penyet', 'porsi', 10000, 9],
+        ['12:25', 'Es teh manis', 'gelas', 4000, 30]]
+    },
+    {
+      days: 2, saved: '20:40', modal: 800000,
+      buys: [['06:15', 'Beras', 'kg', 14500, 5], ['06:20', 'Cabai rawit', 'kg', 65000, 1], ['06:20', 'Tomat', 'kg', 12000, 2],
+        ['06:35', 'Ikan lele', 'kg', 28000, 3], ['06:45', 'Tempe', 'papan', 5000, 10]],
+      sales: [['11:35', 'Lele penyet', 'porsi', 15000, 18], ['12:05', 'Tempe penyet', 'porsi', 10000, 12], ['12:30', 'Es teh manis', 'gelas', 4000, 25]]
+    }
+  ];
+  const LISTS = {
+    belanja: {
+      key: 'items', noun: 'barang', title: 'Catat belanja', editTitle: 'Ubah belanja', hint: 'Satu baris untuk satu jenis barang',
+      timeLabel: 'Waktu pembelian', nameLabel: 'Jenis barang', namePh: 'mis. Cabai rawit', priceLabel: 'Harga per item',
+      submit: 'Tambah ke daftar belanja', ledger: 'Daftar belanja', total: 'Total belanja', datalist: 'itemList', catalog: COMMON, unitPh: 'kg',
+      thName: 'Barang', thPrice: 'Harga / item', emptyTitle: 'Belum ada belanja tercatat',
+      emptyText: 'Isi waktu, jenis barang, harga per item, dan kuantiti di atas, lalu tekan Tambah ke daftar belanja.',
+      nameErr: 'Isi jenis barang dulu, misalnya "Beras" atau "Cabai rawit".', priceErr: 'Isi harga per item, lebih dari Rp 0.',
+      cleared: 'Semua belanja dihapus'
+    },
+    penjualan: {
+      key: 'sales', noun: 'item', title: 'Catat penjualan', editTitle: 'Ubah penjualan', hint: 'Satu baris untuk satu menu atau barang',
+      timeLabel: 'Waktu penjualan', nameLabel: 'Menu / barang terjual', namePh: 'mis. Ayam penyet', priceLabel: 'Harga jual per item',
+      submit: 'Tambah ke daftar penjualan', ledger: 'Daftar penjualan', total: 'Total penjualan', datalist: 'menuList', catalog: MENU, unitPh: 'porsi',
+      thName: 'Menu / barang', thPrice: 'Harga jual', emptyTitle: 'Belum ada penjualan tercatat',
+      emptyText: 'Isi waktu, menu atau barang yang terjual, harga jual, dan kuantiti di atas, lalu tekan Tambah ke daftar penjualan.',
+      nameErr: 'Isi nama menu atau barang yang terjual, misalnya "Ayam penyet".', priceErr: 'Isi harga jual per item, lebih dari Rp 0.',
+      cleared: 'Semua penjualan dihapus'
+    }
+  };
 
   const $ = (id) => document.getElementById(id);
   const pad = (n) => String(n).padStart(2, '0');
@@ -404,6 +537,7 @@ tfoot .num{font-size:1.05rem}
   const signedRupiah = (n) => (Math.round(n) < 0 ? '− ' : '') + rupiah(n);
   const qtyText = (q) => Number(q).toLocaleString('id-ID', { maximumFractionDigits: 3 });
   const subtotal = (it) => Math.round(it.price * it.qty);
+  const sumOf = (list) => list.reduce((s, it) => s + subtotal(it), 0);
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const toLocalInput = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -420,27 +554,50 @@ tfoot .num{font-size:1.05rem}
   const fmtRowTime = (s) => { const d = parseLocal(s); return fmtShortDate(d) + ' · ' + fmtClock(d); };
 
   /* ---------- State ---------- */
+  const dayString = (daysAgo) => { const d = new Date(); d.setDate(d.getDate() - daysAgo); return toLocalInput(d).slice(0, 10); };
+  const makeRows = (rows, daysAgo = 0) => {
+    const day = dayString(daysAgo);
+    return rows.map(([t, name, unit, price, qty]) => ({ id: uid(), time: `${day}T${t}`, name, unit, price, qty, sample: true }));
+  };
+  const sampleHistory = () => SAMPLE_HISTORY.map((h) => ({
+    id: uid(), savedAt: `${dayString(h.days)}T${h.saved}`, modal: h.modal, items: makeRows(h.buys, h.days), sales: makeRows(h.sales, h.days), sample: true
+  }));
   function sampleState() {
-    const day = nowLocal().slice(0, 10);
     return {
-      modal: 1000000, modalIsSample: true, sample: true,
-      items: SAMPLE.map(([t, name, unit, price, qty]) => ({ id: uid(), time: `${day}T${t}`, name, unit, price, qty, sample: true }))
+      modal: 1000000, modalIsSample: true, sample: true, view: 'belanja',
+      items: makeRows(SAMPLE_BUY), sales: makeRows(SAMPLE_SALE), history: sampleHistory(), historyId: null
     };
   }
+  const normItem = (it) => ({
+    id: String(it.id || uid()),
+    time: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(it.time) ? String(it.time).slice(0, 16) : nowLocal(),
+    name: String(it.name || 'Tanpa nama').slice(0, 120),
+    unit: String(it.unit || '').slice(0, 24),
+    price: Math.max(0, Math.round(Number(it.price) || 0)),
+    qty: Math.max(0, Number(it.qty) || 0),
+    sample: !!it.sample
+  });
+  const isObj = (it) => it && typeof it === 'object';
+  const normEntry = (h) => ({
+    id: String(h.id || uid()),
+    savedAt: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(h.savedAt) ? String(h.savedAt).slice(0, 16) : nowLocal(),
+    modal: Math.max(0, Math.round(Number(h.modal) || 0)),
+    items: (Array.isArray(h.items) ? h.items : []).filter(isObj).map(normItem),
+    sales: (Array.isArray(h.sales) ? h.sales : []).filter(isObj).map(normItem),
+    sample: !!h.sample
+  });
   function normalize(s) {
+    const sales = Array.isArray(s.sales) ? s.sales : (s.sample ? makeRows(SAMPLE_SALE) : []);
+    const history = Array.isArray(s.history) ? s.history : (s.sample ? sampleHistory() : []);
     return {
       modal: Math.max(0, Math.round(Number(s.modal) || 0)),
       modalIsSample: !!s.modalIsSample,
       sample: !!s.sample,
-      items: s.items.filter((it) => it && typeof it === 'object').map((it) => ({
-        id: String(it.id || uid()),
-        time: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(it.time) ? String(it.time).slice(0, 16) : nowLocal(),
-        name: String(it.name || 'Tanpa nama').slice(0, 120),
-        unit: String(it.unit || '').slice(0, 24),
-        price: Math.max(0, Math.round(Number(it.price) || 0)),
-        qty: Math.max(0, Number(it.qty) || 0),
-        sample: !!it.sample
-      }))
+      view: ['penjualan', 'histori'].includes(s.view) ? s.view : 'belanja',
+      items: s.items.filter(isObj).map(normItem),
+      sales: sales.filter(isObj).map(normItem),
+      history: history.filter(isObj).map(normEntry),
+      historyId: typeof s.historyId === 'string' ? s.historyId : null
     };
   }
   function load() {
@@ -455,47 +612,95 @@ tfoot .num{font-size:1.05rem}
   let state = load();
   let editingId = null;
 
-  const sortedItems = () => state.items.slice().sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
+  const L = () => LISTS[state.view] || LISTS.belanja;
+  const currentList = () => state[L().key];
+  const byTime = (a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0);
+  const sorted = (list) => list.slice().sort(byTime);
+  const copyRows = (list) => list.map((it) => ({ ...it }));
+  const rowSig = (it) => [it.time, it.name, it.unit, it.price, it.qty];
+  const bookSig = (b) => JSON.stringify([b.modal, sorted(b.items).map(rowSig), sorted(b.sales).map(rowSig)]);
+  const linkedEntry = () => state.history.find((h) => h.id === state.historyId) || null;
 
-  function summary() {
-    const items = sortedItems();
-    const total = items.reduce((s, it) => s + subtotal(it), 0);
-    const modal = state.modal;
-    const sisa = modal - total;
+  const summary = () => summarize(state);
+  function summarize(book) {
+    const buys = sorted(book.items), sales = sorted(book.sales);
+    const totalBuy = sumOf(buys), totalSale = sumOf(sales);
+    const modal = book.modal;
+    const sisa = modal - totalBuy;
+    const laba = totalSale - totalBuy;
+    const cash = sisa + totalSale;
     let status;
-    if (!items.length) status = { key: 'idle', label: 'Belum ada belanja' };
+    if (!buys.length) status = { key: 'idle', label: 'Belum ada belanja' };
     else if (modal <= 0) status = { key: 'warn', label: 'Modal belum diisi' };
     else if (sisa < 0) status = { key: 'bad', label: 'Modal kurang' };
     else if (sisa < modal * 0.1) status = { key: 'warn', label: 'Modal menipis' };
     else status = { key: 'good', label: 'Modal cukup' };
-    const used = modal > 0 ? total / modal : null;
-    return { items, total, modal, sisa, status, used };
+    let profit;
+    if (!sales.length) profit = { key: 'idle', label: 'Belum ada penjualan' };
+    else if (laba > 0) profit = { key: 'good', label: 'Untung' };
+    else if (laba < 0) profit = { key: 'bad', label: 'Rugi' };
+    else profit = { key: 'warn', label: 'Impas' };
+    const used = modal > 0 ? totalBuy / modal : null;
+    const all = sorted(buys.concat(sales));
+    return { buys, sales, all, totalBuy, totalSale, modal, sisa, laba, cash, status, profit, used };
   }
 
-  function periodText(items) {
-    if (!items.length) return fmtLongDate(new Date());
-    const a = parseLocal(items[0].time), b = parseLocal(items[items.length - 1].time);
+  function periodText(all) {
+    if (!all.length) return fmtLongDate(new Date());
+    const a = parseLocal(all[0].time), b = parseLocal(all[all.length - 1].time);
     return a.toDateString() === b.toDateString() ? fmtLongDate(a) : `${fmtDate(a)} – ${fmtDate(b)}`;
   }
-  function fileStem(items) {
-    const a = items[0].time.slice(0, 10), b = items[items.length - 1].time.slice(0, 10);
-    return 'pawon-oelek_belanja_' + (a === b ? a : `${a}_sd_${b}`);
+  function fileStem(all) {
+    const a = all[0].time.slice(0, 10), b = all[all.length - 1].time.slice(0, 10);
+    return 'pawon-oelek_laporan_' + (a === b ? a : `${a}_sd_${b}`);
   }
   const pctText = (used) => (used * 100).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + '%';
 
   /* ---------- Render ---------- */
   function cell(cls, text) { const td = document.createElement('td'); td.className = cls; td.textContent = text; return td; }
 
+  function applyView() {
+    const c = L();
+    const isHist = state.view === 'histori';
+    $('tabBelanja').setAttribute('aria-pressed', String(state.view === 'belanja'));
+    $('tabPenjualan').setAttribute('aria-pressed', String(state.view === 'penjualan'));
+    $('tabHistori').setAttribute('aria-pressed', String(isHist));
+    $('entryPanel').hidden = isHist;
+    $('ledgerPanel').hidden = isHist;
+    $('historyPanel').hidden = !isHist;
+    $('entryTitle').textContent = c.title;
+    $('entryHint').textContent = c.hint;
+    $('lTime').textContent = c.timeLabel;
+    $('lName').textContent = c.nameLabel;
+    $('fName').placeholder = c.namePh;
+    $('fName').setAttribute('list', c.datalist);
+    $('fUnit').placeholder = c.unitPh;
+    $('lPrice').textContent = c.priceLabel;
+    $('submitBtn').textContent = c.submit;
+    $('ledgerTitle').textContent = c.ledger;
+    $('thName').textContent = c.thName;
+    $('thPrice').textContent = c.thPrice;
+    $('tLabel').textContent = c.total;
+    $('emptyTitle').textContent = c.emptyTitle;
+    $('emptyText').textContent = c.emptyText;
+  }
+
   function render() {
     const S = summary();
-    const has = S.items.length > 0;
+    const c = L();
+    const isSales = state.view === 'penjualan';
+    const list = isSales ? S.sales : S.buys;
+    const has = list.length > 0;
+    const hasAny = S.all.length > 0;
 
     $('sampleBanner').hidden = !state.sample;
+    $('metaBelanja').textContent = `${S.buys.length} barang · ${rupiah(S.totalBuy)}`;
+    $('metaPenjualan').textContent = `${S.sales.length} item · ${rupiah(S.totalSale)}`;
     if (document.activeElement !== $('fModal')) $('fModal').value = state.modal ? state.modal.toLocaleString('id-ID') : '';
 
     const tbody = $('rows');
     tbody.replaceChildren();
-    S.items.forEach((it, i) => {
+    list.forEach((it, i) => {
       const tr = document.createElement('tr');
       if (it.id === editingId) tr.className = 'editing';
       const act = document.createElement('td');
@@ -521,15 +726,16 @@ tfoot .num{font-size:1.05rem}
       );
       tbody.append(tr);
     });
-    $('tTotal').textContent = rupiah(S.total);
+    $('tTotal').textContent = rupiah(isSales ? S.totalSale : S.totalBuy);
     $('tableWrap').hidden = !has;
     $('emptyState').hidden = has;
     $('resetBtn').hidden = !has;
     if (!has) disarmReset();
 
+    $('notaPeriod').textContent = periodText(S.all);
     $('oModal').textContent = rupiah(S.modal);
-    $('oTotal').textContent = (S.total ? '− ' : '') + rupiah(S.total);
-    $('oCount').textContent = `${S.items.length} barang`;
+    $('oTotal').textContent = (S.totalBuy ? '− ' : '') + rupiah(S.totalBuy);
+    $('oCount').textContent = `${S.buys.length} barang`;
     $('oSisa').textContent = signedRupiah(S.sisa);
     $('oResult').dataset.state = S.status.key;
     $('oPill').textContent = S.status.label;
@@ -540,13 +746,94 @@ tfoot .num{font-size:1.05rem}
     else cap = `${pctText(S.used)} modal terpakai untuk belanja.`;
     $('oMeterCap').textContent = cap;
 
-    $('dlJpg').disabled = !has || busy.jpg;
-    $('dlXlsx').disabled = !has || busy.xlsx;
-    if (!has && !$('exportNote').dataset.tone) $('exportNote').textContent = 'Tambahkan minimal satu barang untuk mengunduh laporan.';
-    else if (has && $('exportNote').textContent.startsWith('Tambahkan minimal')) $('exportNote').textContent = '';
+    $('oSaleCount').textContent = `${S.sales.length} item`;
+    $('oSales').textContent = rupiah(S.totalSale);
+    $('oProfitRow').dataset.state = S.profit.key;
+    $('oProfitPill').textContent = S.profit.label;
+    $('oProfit').textContent = S.sales.length ? signedRupiah(S.laba) : '—';
+    $('oCash').textContent = signedRupiah(S.cash);
+
+    $('dlJpg').disabled = !hasAny || busy.jpg;
+    $('dlXlsx').disabled = !hasAny || busy.xlsx;
+    if (!hasAny && !$('exportNote').dataset.tone) $('exportNote').textContent = 'Catat minimal satu belanja atau penjualan untuk mengunduh laporan.';
+    else if (hasAny && $('exportNote').textContent.startsWith('Catat minimal')) $('exportNote').textContent = '';
 
     $('pbValue').textContent = signedRupiah(S.sisa);
     $('pbValue').dataset.neg = String(S.sisa < 0);
+    $('pbProfit').textContent = S.sales.length ? signedRupiah(S.laba) : '—';
+    $('pbProfit').dataset.neg = String(S.sales.length > 0 && S.laba < 0);
+
+    // Save-to-history state
+    const linked = linkedEntry();
+    const clean = linked && bookSig(state) === bookSig(linked);
+    let st = '', tone = '';
+    if (state.sample) st = 'Data contoh tidak bisa disimpan ke histori. Catat data Anda sendiri dulu.';
+    else if (!hasAny) st = linked ? 'Buku ini kosong. Catat lagi atau buka histori lain.' : 'Catat belanja atau penjualan, lalu simpan ke histori.';
+    else if (!linked) { st = 'Belum disimpan ke histori.'; tone = 'warn'; }
+    else if (!clean) { st = `Ada perubahan sejak disimpan ${fmtRowTime(linked.savedAt)}.`; tone = 'warn'; }
+    else { st = `Tersimpan di histori · ${fmtRowTime(linked.savedAt)}`; tone = 'good'; }
+    $('saveState').textContent = st;
+    if (tone) $('saveState').dataset.tone = tone; else delete $('saveState').dataset.tone;
+    $('saveHist').textContent = linked && !linked.sample ? 'Perbarui histori' : 'Simpan ke histori';
+    $('saveHist').disabled = state.sample || !hasAny || !!clean;
+    $('newBook').disabled = !hasAny && !state.historyId;
+
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const entries = state.history.map((h) => ({ h, S: summarize(h) }));
+    const keyOf = (e) => (e.S.all.length ? e.S.all[0].time : e.h.savedAt);
+    entries.sort((a, b) => (keyOf(a) < keyOf(b) ? 1 : keyOf(a) > keyOf(b) ? -1 : (a.h.savedAt < b.h.savedAt ? 1 : -1)));
+    $('metaHistori').textContent = `${entries.length} tersimpan`;
+    $('recapBtn').disabled = !entries.length || busy.recap;
+    $('histEmpty').hidden = entries.length > 0;
+    $('histList').hidden = !entries.length;
+    if (entries.length) {
+      const totSale = entries.reduce((s, e) => s + e.S.totalSale, 0);
+      const totProfit = entries.reduce((s, e) => s + (e.S.sales.length ? e.S.laba : 0), 0);
+      $('histSum').textContent = `${entries.length} penghitungan · total penjualan ${rupiah(totSale)} · total laba kotor ${signedRupiah(totProfit)}`;
+    } else $('histSum').textContent = '';
+    if (state.view !== 'histori') return;
+
+    const ol = $('histList');
+    ol.replaceChildren();
+    for (const { h, S } of entries) {
+      const li = document.createElement('li');
+      li.className = 'hist-item toned';
+      li.dataset.state = S.profit.key;
+      li.dataset.current = String(h.id === state.historyId);
+      const head = document.createElement('div'); head.className = 'hi-head';
+      const left = document.createElement('div');
+      const h3 = document.createElement('h3'); h3.textContent = periodText(S.all.length ? S.all : [{ time: h.savedAt }]);
+      if (h.id === state.historyId) { const c = document.createElement('span'); c.className = 'chip on'; c.textContent = 'Sedang dibuka'; h3.append(c); }
+      if (h.sample) { const c = document.createElement('span'); c.className = 'chip'; c.textContent = 'Contoh'; h3.append(c); }
+      const meta = document.createElement('p'); meta.className = 'hi-meta';
+      meta.textContent = `Disimpan ${fmtRowTime(h.savedAt)} · ${S.buys.length} belanja · ${S.sales.length} penjualan`;
+      left.append(h3, meta);
+      const pill = document.createElement('span'); pill.className = 'pill'; pill.textContent = S.profit.label;
+      head.append(left, pill);
+      const dl = document.createElement('dl'); dl.className = 'hi-stats';
+      [['Modal', rupiah(S.modal)], ['Belanja', rupiah(S.totalBuy)], ['Penjualan', rupiah(S.totalSale)],
+        ['Sisa modal', signedRupiah(S.sisa)], ['Laba kotor', S.sales.length ? signedRupiah(S.laba) : '—', 'tone'], ['Kas akhir', signedRupiah(S.cash)]]
+        .forEach(([k, v, cls]) => {
+          const d = document.createElement('div');
+          const dt = document.createElement('dt'); dt.textContent = k;
+          const dd = document.createElement('dd'); dd.textContent = v; if (cls) dd.className = cls;
+          d.append(dt, dd); dl.append(d);
+        });
+      const acts = document.createElement('div'); acts.className = 'hi-acts';
+      [['open', h.id === state.historyId ? 'Sedang dibuka' : 'Buka'], ['jpg', 'Unduh JPEG'], ['xlsx', 'Unduh Excel'], ['del', 'Hapus']].forEach(([act, label]) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'btn btn-ghost btn-small'; b.dataset.hact = act; b.dataset.id = h.id; b.textContent = label;
+        if (act === 'open' && h.id === state.historyId) b.disabled = true;
+        if ((act === 'jpg' || act === 'xlsx') && !S.all.length) b.disabled = true;
+        b.setAttribute('aria-label', `${label} histori ${h3.firstChild.textContent}`);
+        acts.append(b);
+      });
+      li.append(head, dl, acts);
+      ol.append(li);
+    }
   }
 
   /* ---------- Form ---------- */
@@ -597,13 +884,13 @@ tfoot .num{font-size:1.05rem}
     updateCalc();
   }
   function startEdit(id) {
-    const it = state.items.find((x) => x.id === id);
+    const it = currentList().find((x) => x.id === id);
     if (!it) return;
     editingId = id;
     $('fTime').value = it.time; $('fName').value = it.name; $('fUnit').value = it.unit;
     $('fPrice').value = it.price ? it.price.toLocaleString('id-ID') : '';
     $('fQty').value = String(it.qty).replace('.', ',');
-    $('entryTitle').textContent = 'Ubah barang';
+    $('entryTitle').textContent = L().editTitle;
     $('entryHint').textContent = `Sedang mengubah: ${it.name}`;
     $('submitBtn').textContent = 'Simpan perubahan';
     $('cancelEdit').hidden = false;
@@ -615,28 +902,158 @@ tfoot .num{font-size:1.05rem}
   }
   function exitEdit() {
     editingId = null;
-    $('entryTitle').textContent = 'Catat belanja';
-    $('entryHint').textContent = 'Satu baris untuk satu jenis barang';
-    $('submitBtn').textContent = 'Tambah ke daftar';
+    $('entryTitle').textContent = L().title;
+    $('entryHint').textContent = L().hint;
+    $('submitBtn').textContent = L().submit;
     $('cancelEdit').hidden = true;
   }
   function clearSample() {
     state.items = state.items.filter((it) => !it.sample);
+    state.sales = state.sales.filter((it) => !it.sample);
+    state.history = state.history.filter((h) => !h.sample);
+    if (state.historyId && !state.history.some((h) => h.id === state.historyId)) state.historyId = null;
     state.sample = false;
     if (state.modalIsSample) { state.modal = 0; state.modalIsSample = false; }
-    if (editingId && !state.items.some((x) => x.id === editingId)) { exitEdit(); resetForm(); }
+    if (editingId && !currentList().some((x) => x.id === editingId)) { exitEdit(); resetForm(); }
   }
+  function setView(view) {
+    if (view === state.view) return;
+    if (editingId) { exitEdit(); resetForm(); }
+    disarmReset();
+    state.view = view;
+    save();
+    applyView();
+    resetForm();
+    render();
+  }
+
+  $('tabBelanja').addEventListener('click', () => setView('belanja'));
+  $('tabPenjualan').addEventListener('click', () => setView('penjualan'));
+  $('tabHistori').addEventListener('click', () => setView('histori'));
+
+  /* ---------- History ---------- */
+  function saveToHistory() {
+    const S = summary();
+    if (state.sample || !S.all.length) return;
+    const snap = { modal: state.modal, items: copyRows(state.items), sales: copyRows(state.sales), savedAt: nowLocal() };
+    let entry = linkedEntry();
+    let msg;
+    if (entry && !entry.sample) {
+      Object.assign(entry, snap);
+      msg = `Histori diperbarui · ${periodText(S.all)}`;
+    } else {
+      entry = { id: uid(), sample: false, ...snap };
+      state.history.push(entry);
+      state.historyId = entry.id;
+      msg = `Disimpan ke histori · ${periodText(S.all)}`;
+    }
+    save(); render();
+    toast(msg, { label: 'Mulai buku baru', fn: newBook });
+  }
+  function newBook() {
+    if (editingId) { exitEdit(); resetForm(); }
+    if (state.sample) {
+      clearSample();
+      state.items = []; state.sales = []; state.historyId = null;
+      save(); render();
+      toast('Data contoh dikosongkan. Buku baru siap diisi.');
+      return;
+    }
+    const prev = { items: state.items, sales: state.sales, historyId: state.historyId };
+    state.items = []; state.sales = []; state.historyId = null;
+    if (state.view === 'histori') { state.view = 'belanja'; applyView(); }
+    $('fTime').value = nowLocal();
+    save(); render();
+    toast('Buku baru dimulai. Modal tidak berubah, silakan sesuaikan.', {
+      label: 'Urungkan', fn: () => { Object.assign(state, prev); save(); render(); }
+    });
+  }
+  function openEntry(id) {
+    const entry = state.history.find((h) => h.id === id);
+    if (!entry) return;
+    if (editingId) { exitEdit(); resetForm(); }
+    const prev = { modal: state.modal, modalIsSample: state.modalIsSample, items: state.items, sales: state.sales, historyId: state.historyId, view: state.view };
+    state.modal = entry.modal;
+    state.modalIsSample = !!entry.sample;
+    state.items = copyRows(entry.items);
+    state.sales = copyRows(entry.sales);
+    state.historyId = entry.id;
+    state.view = 'belanja';
+    applyView(); resetForm();
+    save(); render();
+    window.scrollTo({ top: 0, behavior: reducedMotion() ? 'auto' : 'smooth' });
+    toast(`Membuka histori ${periodText(summary().all)}`, {
+      label: 'Urungkan', fn: () => { Object.assign(state, prev); applyView(); save(); render(); }
+    });
+  }
+  function deleteEntry(id) {
+    const idx = state.history.findIndex((h) => h.id === id);
+    if (idx < 0) return;
+    const [entry] = state.history.splice(idx, 1);
+    save(); render();
+    toast('Histori dihapus', { label: 'Urungkan', fn: () => { state.history.splice(idx, 0, entry); save(); render(); } });
+  }
+  const histNote = (msg, tone) => {
+    const n = $('histNote');
+    n.textContent = msg;
+    if (tone) n.dataset.tone = tone; else delete n.dataset.tone;
+  };
+  async function exportEntry(id, kind, btn) {
+    const entry = state.history.find((h) => h.id === id);
+    if (!entry) return;
+    const S = summarize(entry);
+    if (!S.all.length) return;
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Menyiapkan…';
+    histNote('');
+    try {
+      const blob = kind === 'jpg' ? await buildJpeg(S) : await buildXlsx(S);
+      await saveFile(`${fileStem(S.all)}.${kind}`, blob, histNote);
+    } catch (e) {
+      console.error(e);
+      histNote(kind === 'xlsx' ? 'File Excel gagal dibuat. Periksa koneksi internet lalu coba lagi.' : 'Gambar gagal dibuat. Coba lagi.', 'bad');
+    } finally {
+      btn.disabled = false; btn.textContent = orig;
+    }
+  }
+  $('histList').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-hact]');
+    if (!b || b.disabled) return;
+    const { hact, id } = b.dataset;
+    if (hact === 'open') openEntry(id);
+    else if (hact === 'del') deleteEntry(id);
+    else exportEntry(id, hact, b);
+  });
+  $('saveHist').addEventListener('click', saveToHistory);
+  $('newBook').addEventListener('click', newBook);
+  $('recapBtn').addEventListener('click', async () => {
+    if (!state.history.length || busy.recap) return;
+    busy.recap = true;
+    const btn = $('recapBtn'), orig = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Menyiapkan rekap…';
+    histNote('');
+    try {
+      const blob = await buildRecapXlsx();
+      await saveFile(`pawon-oelek_rekap-histori_${nowLocal().slice(0, 10)}.xlsx`, blob, histNote);
+    } catch (e) {
+      console.error(e);
+      histNote('Rekap Excel gagal dibuat. Periksa koneksi internet lalu coba lagi.', 'bad');
+    } finally {
+      busy.recap = false; btn.textContent = orig; render();
+    }
+  });
 
   $('itemForm').addEventListener('submit', (e) => {
     e.preventDefault();
+    const c = L();
     const f = readForm();
-    if (!f.name) return showError('Isi jenis barang dulu, misalnya "Beras" atau "Cabai rawit".', $('fName'));
-    if (f.price <= 0) return showError('Isi harga per item, lebih dari Rp 0.', $('fPrice'));
+    if (!f.name) return showError(c.nameErr, $('fName'));
+    if (f.price <= 0) return showError(c.priceErr, $('fPrice'));
     if (!(f.qty > 0)) return showError('Isi kuantiti lebih dari 0. Pecahan boleh, misalnya 0,5.', $('fQty'));
     showError('');
     const sub = Math.round(f.price * f.qty);
     if (editingId) {
-      const it = state.items.find((x) => x.id === editingId);
+      const it = currentList().find((x) => x.id === editingId);
       if (it) Object.assign(it, f);
       exitEdit();
       toast(`${f.name} diperbarui · ${rupiah(sub)}`);
@@ -647,7 +1064,7 @@ tfoot .num{font-size:1.05rem}
         clearSample();
         msg = 'Data contoh dikosongkan. ' + msg + (hadSampleModal ? '. Jangan lupa isi modal.' : '');
       }
-      state.items.push({ id: uid(), ...f, sample: false });
+      currentList().push({ id: uid(), ...f, sample: false });
       toast(msg);
     }
     save();
@@ -660,7 +1077,7 @@ tfoot .num{font-size:1.05rem}
   $('fQty').addEventListener('input', (e) => { sanitizeQty(e.target); updateCalc(); });
   $('fUnit').addEventListener('input', updateCalc);
   $('fName').addEventListener('input', (e) => {
-    const hit = COMMON.find(([n]) => n.toLowerCase() === e.target.value.trim().toLowerCase());
+    const hit = L().catalog.find(([n]) => n.toLowerCase() === e.target.value.trim().toLowerCase());
     if (hit && !$('fUnit').value.trim()) { $('fUnit').value = hit[1]; updateCalc(); }
   });
   $('fModal').addEventListener('input', (e) => {
@@ -672,7 +1089,7 @@ tfoot .num{font-size:1.05rem}
   });
   $('clearSample').addEventListener('click', () => {
     clearSample(); save(); render();
-    toast('Data contoh dikosongkan. Silakan isi modal dan belanja Anda.');
+    toast('Data contoh dikosongkan. Silakan isi modal, belanja, dan penjualan Anda.');
     $('fModal').focus();
   });
 
@@ -683,15 +1100,17 @@ tfoot .num{font-size:1.05rem}
     else removeItem(b.dataset.id);
   });
   function removeItem(id) {
-    const idx = state.items.findIndex((x) => x.id === id);
+    const key = L().key;
+    const list = state[key];
+    const idx = list.findIndex((x) => x.id === id);
     if (idx < 0) return;
-    const [it] = state.items.splice(idx, 1);
+    const [it] = list.splice(idx, 1);
     if (editingId === id) { exitEdit(); resetForm(); }
     save(); render();
-    toast(`${it.name} dihapus`, { label: 'Urungkan', fn: () => { state.items.splice(idx, 0, it); save(); render(); } });
+    toast(`${it.name} dihapus`, { label: 'Urungkan', fn: () => { state[key].splice(idx, 0, it); save(); render(); } });
   }
 
-  /* Two-step "Hapus semua" */
+  /* Two-step "Hapus semua" for the open list */
   let resetArmed = false, resetTimer = null;
   function disarmReset() {
     resetArmed = false; clearTimeout(resetTimer);
@@ -700,20 +1119,23 @@ tfoot .num{font-size:1.05rem}
     $('resetCancel').hidden = true;
   }
   $('resetBtn').addEventListener('click', () => {
+    const c = L();
     if (!resetArmed) {
       resetArmed = true;
-      $('resetBtn').textContent = `Ya, hapus ${state.items.length} barang`;
+      $('resetBtn').textContent = `Ya, hapus ${currentList().length} ${c.noun}`;
       $('resetBtn').classList.add('btn-danger');
       $('resetCancel').hidden = false;
       resetTimer = setTimeout(disarmReset, 6000);
       return;
     }
     disarmReset();
-    const prev = { items: state.items.slice(), sample: state.sample };
-    state.items = []; state.sample = false;
+    const key = c.key;
+    const prev = state[key].slice();
+    state[key] = [];
+    if (state.sample && !state.items.some((x) => x.sample) && !state.sales.some((x) => x.sample)) state.sample = false;
     if (editingId) { exitEdit(); resetForm(); }
     save(); render();
-    toast('Semua barang dihapus', { label: 'Urungkan', fn: () => { state.items = prev.items; state.sample = prev.sample; save(); render(); } });
+    toast(c.cleared, { label: 'Urungkan', fn: () => { state[key] = prev; if (prev.some((x) => x.sample)) state.sample = true; save(); render(); } });
   });
   $('resetCancel').addEventListener('click', disarmReset);
 
@@ -734,6 +1156,7 @@ tfoot .num{font-size:1.05rem}
     clearTimeout(toastTimer);
     toastTimer = setTimeout(hideToast, action ? 7000 : 3500);
   }
+  const exportNote = (msg, tone) => note(msg, tone);
   function note(msg, tone) {
     const n = $('exportNote');
     n.textContent = msg;
@@ -747,7 +1170,7 @@ tfoot .num{font-size:1.05rem}
     if (!downloadsPromise) downloadsPromise = window.claude.use('downloads').catch(() => null);
     return downloadsPromise;
   }
-  async function saveFile(filename, blob) {
+  async function saveFile(filename, blob, note = exportNote) {
     const dl = await getDownloads();
     if (dl) {
       try {
@@ -773,10 +1196,10 @@ tfoot .num{font-size:1.05rem}
     note(`Diunduh: ${filename}`, 'good');
   }
 
-  const busy = { jpg: false, xlsx: false };
+  const busy = { jpg: false, xlsx: false, recap: false };
   async function runExport(kind, btn, label, build, ext) {
     const S = summary();
-    if (!S.items.length || busy[kind]) return;
+    if (!S.all.length || busy[kind]) return;
     busy[kind] = true;
     const span = btn.querySelector('span');
     const orig = span.textContent;
@@ -785,7 +1208,7 @@ tfoot .num{font-size:1.05rem}
     note('');
     try {
       const blob = await build(S);
-      await saveFile(`${fileStem(S.items)}.${ext}`, blob);
+      await saveFile(`${fileStem(S.all)}.${ext}`, blob);
     } catch (e) {
       console.error(e);
       note(kind === 'xlsx' ? 'File Excel gagal dibuat. Periksa koneksi internet lalu coba lagi.' : 'Gambar gagal dibuat. Coba lagi.', 'bad');
@@ -807,7 +1230,7 @@ tfoot .num{font-size:1.05rem}
   async function fontsReady() {
     if (!document.fonts || !document.fonts.load) return;
     const specs = ['800 58px "Bricolage Grotesque"', '800 52px "Bricolage Grotesque"', '600 19px "Plus Jakarta Sans"', '700 15px "Plus Jakarta Sans"',
-      '500 15px "Plus Jakarta Sans"', '400 15px "IBM Plex Mono"', '600 19px "IBM Plex Mono"', '700 22px "IBM Plex Mono"'];
+      '800 16px "Plus Jakarta Sans"', '500 15px "Plus Jakarta Sans"', '400 15px "IBM Plex Mono"', '600 19px "IBM Plex Mono"', '700 22px "IBM Plex Mono"'];
     try { await Promise.race([Promise.all(specs.map((f) => document.fonts.load(f))), new Promise((r) => setTimeout(r, 3000))]); } catch (e) { /* fallback fonts */ }
   }
   function roundRect(ctx, x, y, w, h, r) {
@@ -849,7 +1272,7 @@ tfoot .num{font-size:1.05rem}
   async function buildJpeg(S) {
     await fontsReady();
     const C = { paper: '#FFFFFF', ink: '#1F231E', muted: '#5C6459', line: '#DEE2D9', stone: '#EEF0EB', chili: '#C4231B', good: '#2C6A37', warn: '#8F5600', bad: '#B3261E' };
-    const tone = { good: C.good, warn: C.warn, bad: C.bad, idle: C.muted }[S.status.key];
+    const toneOf = (k) => ({ good: C.good, warn: C.warn, bad: C.bad, idle: C.muted }[k]);
     const W = 960, P = 48;
     const xNo = P + 6, xTime = P + 52, xName = P + 182, xSubR = W - P - 6;
     const nameMaxW = xSubR - 190 - xName;
@@ -857,12 +1280,17 @@ tfoot .num{font-size:1.05rem}
 
     const m = document.createElement('canvas').getContext('2d');
     m.font = `600 19px ${FONT.body}`;
-    const rows = S.items.map((it) => {
+    const lay = (list) => list.map((it) => {
       const lines = wrapText(m, it.name, nameMaxW, 2);
       return { it, lines, h: 16 + lines.length * 25 + 22 + 14 };
     });
-    const BAND = 176, META = 58, THEAD = 40, TOTAL = 68, GAP = 28, BOX = 244, FOOT = 86;
-    const H = BAND + META + THEAD + rows.reduce((s, r) => s + r.h, 0) + TOTAL + GAP + BOX + FOOT;
+    const sections = [
+      { title: 'BELANJA', color: C.chili, head: 'BARANG  ·  HARGA × QTY', total: 'TOTAL BELANJA', sum: S.totalBuy, empty: 'Belum ada belanja dicatat.', count: `${S.buys.length} barang`, rows: lay(S.buys) },
+      { title: 'PENJUALAN', color: C.good, head: 'MENU / BARANG  ·  HARGA JUAL × QTY', total: 'TOTAL PENJUALAN', sum: S.totalSale, empty: 'Belum ada penjualan dicatat.', count: `${S.sales.length} item`, rows: lay(S.sales) }
+    ];
+    const BAND = 176, META = 44, SEC = 60, THEAD = 40, EMPTY = 60, TOTAL = 66, GAP = 30, BOX = 396, FOOT = 86;
+    const secH = (s) => SEC + THEAD + (s.rows.length ? s.rows.reduce((a, r) => a + r.h, 0) : EMPTY) + TOTAL;
+    const H = BAND + META + sections.reduce((a, s) => a + secH(s), 0) + GAP + BOX + FOOT;
     const scale = Math.max(1, Math.min(2, 30000 / H));
 
     const cv = document.createElement('canvas');
@@ -872,89 +1300,114 @@ tfoot .num{font-size:1.05rem}
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
 
+    const pill = (text, color, x, top, alignRight) => {
+      ctx.font = `700 14px ${FONT.body}`;
+      const pw = ctx.measureText(text).width + 34;
+      const left = alignRight ? x - pw : x;
+      ctx.globalAlpha = 0.12; ctx.fillStyle = color; roundRect(ctx, left, top, pw, 28, 14); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.fillStyle = color; ctx.beginPath(); ctx.arc(left + 15, top + 14, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillText(text, left + 25, top + 19);
+    };
+
     // Band
     ctx.fillStyle = C.chili; ctx.fillRect(0, 0, W, BAND);
     ctx.fillStyle = '#FFFFFF';
     ctx.font = `800 58px ${FONT.display}`; spaced(ctx, -1);
     ctx.fillText('Pawon Oelek', P, 94);
     spaced(ctx, 2.5); ctx.font = `700 14px ${FONT.body}`; ctx.globalAlpha = 0.88;
-    ctx.fillText('LAPORAN BELANJA WARUNG', P, 130);
+    ctx.fillText('LAPORAN BELANJA & PENJUALAN', P, 130);
     ctx.textAlign = 'right';
     ctx.fillText('PERIODE', W - P, 68);
     ctx.globalAlpha = 1; spaced(ctx, 0);
     ctx.font = `700 20px ${FONT.body}`;
-    ctx.fillText(periodText(S.items), W - P, 98);
+    ctx.fillText(periodText(S.all), W - P, 98);
     ctx.font = `500 15px ${FONT.body}`; ctx.globalAlpha = 0.88;
-    ctx.fillText(`${S.items.length} jenis barang`, W - P, 128);
+    ctx.fillText(`${S.buys.length} belanja · ${S.sales.length} penjualan`, W - P, 128);
     ctx.globalAlpha = 1; ctx.textAlign = 'left';
 
     // Meta
     let y = BAND;
     ctx.fillStyle = C.muted; ctx.font = `500 14px ${FONT.body}`;
-    ctx.fillText(`Dibuat ${fmtLongDate(now)}, pukul ${fmtClock(now)}`, P, y + 36);
-
-    // Table head
+    ctx.fillText(`Dibuat ${fmtLongDate(now)}, pukul ${fmtClock(now)}`, P, y + 32);
     y += META;
-    ctx.fillStyle = C.stone; ctx.fillRect(P, y, W - 2 * P, THEAD);
-    ctx.fillStyle = C.muted; ctx.font = `700 12px ${FONT.body}`; spaced(ctx, 1.4);
-    ctx.fillText('NO', xNo, y + 25);
-    ctx.fillText('WAKTU', xTime, y + 25);
-    ctx.fillText('BARANG  ·  HARGA × QTY', xName, y + 25);
-    ctx.textAlign = 'right'; ctx.fillText('SUBTOTAL', xSubR, y + 25); ctx.textAlign = 'left';
-    spaced(ctx, 0);
-    y += THEAD;
 
-    // Rows
-    rows.forEach((r, i) => {
-      const it = r.it, top = y + 16;
-      const d = parseLocal(it.time);
-      ctx.fillStyle = C.muted; ctx.font = `400 15px ${FONT.mono}`;
-      ctx.fillText(String(i + 1), xNo, top + 18);
-      ctx.font = `500 15px ${FONT.body}`;
-      ctx.fillText(fmtShortDate(d), xTime, top + 18);
-      ctx.fillText(fmtClock(d), xTime, top + 40);
-      ctx.fillStyle = C.ink; ctx.font = `600 19px ${FONT.body}`;
-      r.lines.forEach((ln, k) => ctx.fillText(ln, xName, top + 18 + k * 25));
-      ctx.fillStyle = C.muted; ctx.font = `400 15px ${FONT.mono}`;
-      ctx.fillText(`${rupiah(it.price)} × ${qtyText(it.qty)}${it.unit ? ' ' + it.unit : ''}`, xName, top + 18 + r.lines.length * 25 + 2);
-      ctx.fillStyle = C.ink; ctx.font = `600 19px ${FONT.mono}`; ctx.textAlign = 'right';
-      ctx.fillText(rupiah(subtotal(it)), xSubR, top + 18);
+    // Sections
+    for (const s of sections) {
+      ctx.fillStyle = s.color; ctx.font = `800 16px ${FONT.body}`; spaced(ctx, 2);
+      ctx.fillText(s.title, P, y + 40);
+      spaced(ctx, 0);
+      ctx.fillStyle = C.muted; ctx.font = `500 14px ${FONT.body}`; ctx.textAlign = 'right';
+      ctx.fillText(s.count, W - P, y + 40);
       ctx.textAlign = 'left';
-      y += r.h;
-      ctx.fillStyle = C.line; ctx.fillRect(P, y - 1, W - 2 * P, 1);
-    });
+      y += SEC;
 
-    // Total row
-    ctx.fillStyle = C.ink; ctx.fillRect(P, y, W - 2 * P, 2);
-    ctx.font = `800 15px ${FONT.body}`; spaced(ctx, 1.4);
-    ctx.fillText('TOTAL BELANJA', xNo, y + 42);
-    spaced(ctx, 0);
-    ctx.font = `700 22px ${FONT.mono}`; ctx.textAlign = 'right';
-    ctx.fillText(rupiah(S.total), xSubR, y + 43);
-    ctx.textAlign = 'left';
-    y += TOTAL + GAP;
+      ctx.fillStyle = C.stone; ctx.fillRect(P, y, W - 2 * P, THEAD);
+      ctx.fillStyle = C.muted; ctx.font = `700 12px ${FONT.body}`; spaced(ctx, 1.4);
+      ctx.fillText('NO', xNo, y + 25);
+      ctx.fillText('WAKTU', xTime, y + 25);
+      ctx.fillText(s.head, xName, y + 25);
+      ctx.textAlign = 'right'; ctx.fillText('SUBTOTAL', xSubR, y + 25); ctx.textAlign = 'left';
+      spaced(ctx, 0);
+      y += THEAD;
+
+      if (!s.rows.length) {
+        ctx.fillStyle = C.muted; ctx.font = `500 16px ${FONT.body}`;
+        ctx.fillText(s.empty, xName, y + 37);
+        y += EMPTY;
+        ctx.fillStyle = C.line; ctx.fillRect(P, y - 1, W - 2 * P, 1);
+      }
+      s.rows.forEach((r, i) => {
+        const it = r.it, top = y + 16;
+        const d = parseLocal(it.time);
+        ctx.fillStyle = C.muted; ctx.font = `400 15px ${FONT.mono}`;
+        ctx.fillText(String(i + 1), xNo, top + 18);
+        ctx.font = `500 15px ${FONT.body}`;
+        ctx.fillText(fmtShortDate(d), xTime, top + 18);
+        ctx.fillText(fmtClock(d), xTime, top + 40);
+        ctx.fillStyle = C.ink; ctx.font = `600 19px ${FONT.body}`;
+        r.lines.forEach((ln, k) => ctx.fillText(ln, xName, top + 18 + k * 25));
+        ctx.fillStyle = C.muted; ctx.font = `400 15px ${FONT.mono}`;
+        ctx.fillText(`${rupiah(it.price)} × ${qtyText(it.qty)}${it.unit ? ' ' + it.unit : ''}`, xName, top + 18 + r.lines.length * 25 + 2);
+        ctx.fillStyle = C.ink; ctx.font = `600 19px ${FONT.mono}`; ctx.textAlign = 'right';
+        ctx.fillText(rupiah(subtotal(it)), xSubR, top + 18);
+        ctx.textAlign = 'left';
+        y += r.h;
+        ctx.fillStyle = C.line; ctx.fillRect(P, y - 1, W - 2 * P, 1);
+      });
+
+      ctx.fillStyle = C.ink; ctx.fillRect(P, y, W - 2 * P, 2);
+      ctx.font = `800 15px ${FONT.body}`; spaced(ctx, 1.4);
+      ctx.fillText(s.total, xNo, y + 42);
+      spaced(ctx, 0);
+      ctx.font = `700 22px ${FONT.mono}`; ctx.textAlign = 'right';
+      ctx.fillText(rupiah(s.sum), xSubR, y + 43);
+      ctx.textAlign = 'left';
+      y += TOTAL;
+    }
+    y += GAP;
 
     // Summary box
     const bx = P, bw = W - 2 * P, ix = bx + 30, ir = bx + bw - 30;
+    const line = (yy, label, value, opts = {}) => {
+      ctx.font = `${opts.strong ? 700 : 600} 17px ${FONT.body}`; ctx.fillStyle = opts.strong ? C.ink : C.muted;
+      ctx.fillText(label, ix, yy);
+      ctx.font = `${opts.strong ? 700 : 600} ${opts.size || 20}px ${FONT.mono}`; ctx.fillStyle = opts.color || C.ink; ctx.textAlign = 'right';
+      ctx.fillText(value, ir, yy);
+      ctx.textAlign = 'left';
+    };
+    const dash = (yy) => {
+      ctx.strokeStyle = C.muted; ctx.lineWidth = 1.5; ctx.setLineDash([7, 6]);
+      ctx.beginPath(); ctx.moveTo(ix, yy); ctx.lineTo(ir, yy); ctx.stroke(); ctx.setLineDash([]);
+    };
     ctx.fillStyle = C.stone; roundRect(ctx, bx, y, bw, BOX, 16); ctx.fill();
-    ctx.font = `600 17px ${FONT.body}`; ctx.fillStyle = C.muted;
-    ctx.fillText('Modal yang dimiliki', ix, y + 48);
-    ctx.fillText(`Total belanja (${S.items.length} barang)`, ix, y + 86);
-    ctx.font = `600 20px ${FONT.mono}`; ctx.fillStyle = C.ink; ctx.textAlign = 'right';
-    ctx.fillText(rupiah(S.modal), ir, y + 48);
-    ctx.fillText('− ' + rupiah(S.total), ir, y + 86);
-    ctx.textAlign = 'left';
-    ctx.strokeStyle = C.muted; ctx.lineWidth = 1.5; ctx.setLineDash([7, 6]);
-    ctx.beginPath(); ctx.moveTo(ix, y + 112); ctx.lineTo(ir, y + 112); ctx.stroke(); ctx.setLineDash([]);
+    line(y + 48, 'Modal yang dimiliki', rupiah(S.modal));
+    line(y + 86, `Total belanja (${S.buys.length} barang)`, '− ' + rupiah(S.totalBuy));
+    dash(y + 112);
     ctx.fillStyle = C.muted; ctx.font = `800 14px ${FONT.body}`; spaced(ctx, 1.6);
     ctx.fillText('SISA MODAL', ix, y + 148);
     spaced(ctx, 0);
-    // pill
-    ctx.font = `700 14px ${FONT.body}`;
-    const pw = ctx.measureText(S.status.label).width + 34;
-    ctx.globalAlpha = 0.12; ctx.fillStyle = tone; roundRect(ctx, ir - pw, y + 128, pw, 28, 14); ctx.fill(); ctx.globalAlpha = 1;
-    ctx.fillStyle = tone; ctx.beginPath(); ctx.arc(ir - pw + 15, y + 142, 4, 0, Math.PI * 2); ctx.fill();
-    ctx.fillText(S.status.label, ir - pw + 25, y + 147);
+    const tone = toneOf(S.status.key);
+    pill(S.status.label, tone, ir, y + 128, true);
     ctx.fillStyle = S.sisa < 0 ? C.bad : tone; ctx.font = `800 52px ${FONT.display}`;
     ctx.fillText(signedRupiah(S.sisa), ix, y + 208);
     if (S.used !== null) {
@@ -962,13 +1415,24 @@ tfoot .num{font-size:1.05rem}
       ctx.fillText(`${pctText(S.used)} modal terpakai`, ir, y + 206);
       ctx.textAlign = 'left';
     }
+    dash(y + 240);
+    line(y + 282, `Total penjualan (${S.sales.length} item)`, rupiah(S.totalSale));
+    const pTone = toneOf(S.profit.key);
+    ctx.font = `600 17px ${FONT.body}`; ctx.fillStyle = C.muted;
+    ctx.fillText('Laba kotor', ix, y + 324);
+    const lw = ctx.measureText('Laba kotor').width;
+    pill(S.profit.label, pTone, ix + lw + 14, y + 304, false);
+    ctx.font = `700 24px ${FONT.mono}`; ctx.fillStyle = S.sales.length ? pTone : C.muted; ctx.textAlign = 'right';
+    ctx.fillText(S.sales.length ? signedRupiah(S.laba) : '—', ir, y + 325);
+    ctx.textAlign = 'left';
+    line(y + 364, 'Uang kas akhir', signedRupiah(S.cash), { strong: true, size: 21 });
     y += BOX;
 
     // Footer
     ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.setLineDash([3, 6]);
     ctx.beginPath(); ctx.moveTo(P, y + 30); ctx.lineTo(W - P, y + 30); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = C.muted; ctx.font = `500 13px ${FONT.body}`; ctx.textAlign = 'center';
-    ctx.fillText('Sisa modal = modal yang dimiliki − total belanja  ·  Buku Belanja Pawon Oelek', W / 2, y + 60);
+    ctx.fillText('Sisa modal = modal − belanja  ·  Laba kotor = penjualan − belanja  ·  Uang kas akhir = sisa modal + penjualan', W / 2, y + 60);
     ctx.textAlign = 'left';
 
     return new Promise((res, rej) => cv.toBlob((b) => (b ? res(b) : rej(new Error('toBlob gagal'))), 'image/jpeg', 0.92));
@@ -995,114 +1459,248 @@ tfoot .num{font-size:1.05rem}
     const now = new Date();
     const wb = new ExcelJS.Workbook();
     wb.creator = 'Pawon Oelek'; wb.created = now; wb.modified = now;
-    const ws = wb.addWorksheet('Laporan Belanja', {
-      views: [{ state: 'frozen', ySplit: 5, showGridLines: false }],
+    const ws = wb.addWorksheet('Laporan', {
+      views: [{ showGridLines: false }],
       pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 } }
     });
-    ws.columns = [{ width: 6 }, { width: 19 }, { width: 30 }, { width: 11 }, { width: 17 }, { width: 11 }, { width: 22 }];
+    ws.columns = [{ width: 6 }, { width: 19 }, { width: 30 }, { width: 11 }, { width: 18 }, { width: 11 }, { width: 22 }];
     const RP = '"Rp" #,##0;[Red]-"Rp" #,##0';
     const CHILI = 'FFC4231B', INK = 'FF1F231E', MUTED = 'FF5C6459', STONE = 'FFEEF0EB', ZEBRA = 'FFF7F8F5', LINE = 'FFD4D8CF', GOOD = 'FF2C6A37', BAD = 'FFB3261E', WHITE = 'FFFFFFFF';
     const fill = (argb) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } });
+    const font = (o = {}) => ({ name: 'Calibri', size: 11, color: { argb: INK }, ...o });
     const thin = { style: 'thin', color: { argb: LINE } };
     const box = { top: thin, left: thin, bottom: thin, right: thin };
 
-    ws.mergeCells('A1:G1');
-    ws.getCell('A1').value = 'PAWON OELEK';
-    ws.getCell('A1').font = { name: 'Calibri', size: 20, bold: true, color: { argb: WHITE } };
-    ws.getCell('A1').fill = fill(CHILI);
-    ws.getCell('A1').alignment = { vertical: 'middle', indent: 1 };
-    ws.getRow(1).height = 36;
-    ws.mergeCells('A2:G2');
-    ws.getCell('A2').value = 'Laporan Belanja Warung';
-    ws.getCell('A2').font = { name: 'Calibri', size: 12, bold: true, color: { argb: WHITE } };
-    ws.getCell('A2').fill = fill(CHILI);
-    ws.getCell('A2').alignment = { vertical: 'middle', indent: 1 };
-    ws.getRow(2).height = 22;
-    ws.mergeCells('A3:G3');
-    ws.getCell('A3').value = `Periode: ${periodText(S.items)}    ·    Dibuat: ${fmtLongDate(now)}, pukul ${fmtClock(now)}`;
-    ws.getCell('A3').font = { name: 'Calibri', size: 10, color: { argb: MUTED } };
-    ws.getCell('A3').alignment = { vertical: 'middle', indent: 1 };
-    ws.getRow(3).height = 20;
+    const banner = (addr, value, size, bold, argb, bg, height) => {
+      ws.mergeCells(addr);
+      const c = ws.getCell(addr.split(':')[0]);
+      c.value = value;
+      c.font = font({ size, bold, color: { argb } });
+      if (bg) c.fill = fill(bg);
+      c.alignment = { vertical: 'middle', indent: 1 };
+      ws.getRow(c.row).height = height;
+    };
+    banner('A1:G1', 'PAWON OELEK', 20, true, WHITE, CHILI, 36);
+    banner('A2:G2', 'Laporan Belanja & Penjualan Warung', 12, true, WHITE, CHILI, 22);
+    banner('A3:G3', `Periode: ${periodText(S.all)}    ·    Dibuat: ${fmtLongDate(now)}, pukul ${fmtClock(now)}`, 10, false, MUTED, null, 20);
 
-    const head = ws.getRow(5);
-    head.values = ['No', 'Waktu Pembelian', 'Jenis Barang', 'Satuan', 'Harga per Item', 'Kuantiti', 'Subtotal (Harga × Qty)'];
-    head.height = 30;
-    head.eachCell((c) => {
-      c.font = { name: 'Calibri', size: 11, bold: true, color: { argb: WHITE } };
-      c.fill = fill(INK);
-      c.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-      c.border = box;
-    });
-
-    const first = 6;
-    S.items.forEach((it, i) => {
-      const r = first + i;
-      const d = parseLocal(it.time);
-      const row = ws.getRow(r);
-      row.values = [
-        i + 1,
-        new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes())),
-        it.name,
-        it.unit || '',
-        it.price,
-        it.qty,
-        { formula: `ROUND(E${r}*F${r},0)`, result: subtotal(it) }
-      ];
-      row.eachCell({ includeEmpty: true }, (c, col) => {
-        c.font = { name: 'Calibri', size: 11, color: { argb: INK } };
-        c.border = box;
-        if (i % 2 === 1) c.fill = fill(ZEBRA);
-        c.alignment = { vertical: 'middle', horizontal: ['center', 'center', 'left', 'center', 'right', 'center', 'right'][col - 1], wrapText: col === 3 };
-      });
-      row.getCell(2).numFmt = 'dd/mm/yyyy hh:mm';
-      row.getCell(5).numFmt = RP;
-      row.getCell(6).numFmt = 'General';
-      row.getCell(7).numFmt = RP;
-      row.getCell(7).font = { name: 'Calibri', size: 11, bold: true, color: { argb: INK } };
-    });
-    const last = first + S.items.length - 1;
-
-    const rT = last + 2, rM = rT + 1, rS = rT + 2, rStatus = rT + 3;
-    const summaryRow = (r, label, value, opts = {}) => {
-      ws.mergeCells(`A${r}:F${r}`);
-      const l = ws.getCell(`A${r}`), v = ws.getCell(`G${r}`);
+    let r = 5;
+    const section = (title, argb) => {
+      ws.mergeCells(`A${r}:G${r}`);
+      const c = ws.getCell(`A${r}`);
+      c.value = title;
+      c.font = font({ size: 12, bold: true, color: { argb } });
+      c.alignment = { vertical: 'bottom' };
+      c.border = { bottom: { style: 'medium', color: { argb } } };
+      ws.getRow(r).height = 24;
+      r++;
+    };
+    const totalRow = (row, label, value, opts = {}) => {
+      ws.mergeCells(`A${row}:F${row}`);
+      const l = ws.getCell(`A${row}`), v = ws.getCell(`G${row}`);
       l.value = label;
-      l.font = { name: 'Calibri', size: opts.big ? 13 : 11, bold: true, color: { argb: INK } };
+      l.font = font({ size: opts.big ? 13 : 11, bold: true });
       l.alignment = { horizontal: 'right', vertical: 'middle', indent: 1 };
       v.value = value;
-      v.font = { name: 'Calibri', size: opts.big ? 14 : 11, bold: true, color: { argb: opts.color || INK } };
+      v.font = font({ size: opts.big ? 14 : 11, bold: true, color: { argb: opts.color || INK } });
       v.alignment = { horizontal: 'right', vertical: 'middle' };
       if (opts.numFmt !== false) v.numFmt = RP;
       if (opts.fill) { l.fill = fill(opts.fill); v.fill = fill(opts.fill); }
-      if (opts.topRule) { l.border = { top: { style: 'medium', color: { argb: INK } } }; v.border = { top: { style: 'medium', color: { argb: INK } } }; }
-      ws.getRow(r).height = opts.big ? 28 : 22;
+      if (opts.topRule) { const b = { top: { style: 'medium', color: { argb: INK } } }; l.border = b; v.border = b; }
+      ws.getRow(row).height = opts.big ? 28 : 22;
     };
-    summaryRow(rT, 'Total Belanja', { formula: `SUM(G${first}:G${last})`, result: S.total }, { topRule: true });
-    summaryRow(rM, 'Modal yang Dimiliki', S.modal);
-    summaryRow(rS, 'Sisa Modal (Modal − Total Belanja)', { formula: `G${rM}-G${rT}`, result: S.sisa }, { big: true, fill: STONE, color: S.sisa < 0 ? BAD : GOOD });
-    summaryRow(rStatus, 'Status',
-      { formula: `IF(G${rM}<=0,"Modal belum diisi",IF(G${rS}<0,"Modal kurang",IF(G${rS}<G${rM}*0.1,"Modal menipis","Modal cukup")))`, result: S.status.label },
+    const table = (headers, list, emptyText, totalLabel, sum) => {
+      const head = ws.getRow(r);
+      head.values = headers;
+      head.height = 30;
+      head.eachCell((c) => {
+        c.font = font({ bold: true, color: { argb: WHITE } });
+        c.fill = fill(INK);
+        c.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+        c.border = box;
+      });
+      r++;
+      const first = r;
+      if (!list.length) {
+        ws.mergeCells(`A${r}:G${r}`);
+        const c = ws.getCell(`A${r}`);
+        c.value = emptyText;
+        c.font = font({ italic: true, color: { argb: MUTED } });
+        c.alignment = { horizontal: 'center', vertical: 'middle' };
+        c.border = box;
+        ws.getRow(r).height = 22;
+        r++;
+      }
+      list.forEach((it, i) => {
+        const d = parseLocal(it.time);
+        const row = ws.getRow(r);
+        row.values = [
+          i + 1,
+          new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes())),
+          it.name,
+          it.unit || '',
+          it.price,
+          it.qty,
+          { formula: `ROUND(E${r}*F${r},0)`, result: subtotal(it) }
+        ];
+        row.eachCell({ includeEmpty: true }, (c, col) => {
+          c.font = font();
+          c.border = box;
+          if (i % 2 === 1) c.fill = fill(ZEBRA);
+          c.alignment = { vertical: 'middle', horizontal: ['center', 'center', 'left', 'center', 'right', 'center', 'right'][col - 1], wrapText: col === 3 };
+        });
+        row.getCell(2).numFmt = 'dd/mm/yyyy hh:mm';
+        row.getCell(5).numFmt = RP;
+        row.getCell(6).numFmt = 'General';
+        row.getCell(7).numFmt = RP;
+        row.getCell(7).font = font({ bold: true });
+        r++;
+      });
+      const last = r - 1;
+      const t = r;
+      totalRow(t, totalLabel, list.length ? { formula: `SUM(G${first}:G${last})`, result: sum } : 0, { topRule: true });
+      r = t + 3;
+      return t;
+    };
+
+    section('BELANJA', CHILI);
+    const tBuy = table(['No', 'Waktu Pembelian', 'Jenis Barang', 'Satuan', 'Harga per Item', 'Kuantiti', 'Subtotal (Harga × Qty)'],
+      S.buys, 'Belum ada belanja dicatat', 'Total Belanja', S.totalBuy);
+    section('PENJUALAN', GOOD);
+    const tSale = table(['No', 'Waktu Penjualan', 'Menu / Barang Terjual', 'Satuan', 'Harga Jual per Item', 'Kuantiti', 'Subtotal (Harga × Qty)'],
+      S.sales, 'Belum ada penjualan dicatat', 'Total Penjualan', S.totalSale);
+    section('RINGKASAN', INK);
+    const rM = r, rB = r + 1, rS = r + 2, rP = r + 3, rL = r + 4, rK = r + 5, rSM = r + 6, rSU = r + 7;
+    totalRow(rM, 'Modal yang Dimiliki', S.modal);
+    totalRow(rB, 'Total Belanja', { formula: `G${tBuy}`, result: S.totalBuy });
+    totalRow(rS, 'Sisa Modal (Modal − Total Belanja)', { formula: `G${rM}-G${rB}`, result: S.sisa }, { big: true, fill: STONE, color: S.sisa < 0 ? BAD : GOOD });
+    totalRow(rP, 'Total Penjualan', { formula: `G${tSale}`, result: S.totalSale });
+    totalRow(rL, 'Laba Kotor (Total Penjualan − Total Belanja)', { formula: `G${rP}-G${rB}`, result: S.laba }, { big: true, fill: STONE, color: S.laba < 0 ? BAD : GOOD });
+    totalRow(rK, 'Uang Kas Akhir (Sisa Modal + Total Penjualan)', { formula: `G${rS}+G${rP}`, result: S.cash }, { topRule: true });
+    totalRow(rSM, 'Status Modal',
+      { formula: `IF(G${rB}=0,"Belum ada belanja",IF(G${rM}<=0,"Modal belum diisi",IF(G${rS}<0,"Modal kurang",IF(G${rS}<G${rM}*0.1,"Modal menipis","Modal cukup"))))`, result: S.status.label },
+      { numFmt: false, color: MUTED });
+    totalRow(rSU, 'Status Usaha',
+      { formula: `IF(G${rP}=0,"Belum ada penjualan",IF(G${rL}>0,"Untung",IF(G${rL}<0,"Rugi","Impas")))`, result: S.profit.label },
       { numFmt: false, color: MUTED });
 
-    const rNote = rStatus + 2;
+    const rNote = rSU + 2;
     ws.mergeCells(`A${rNote}:G${rNote}`);
-    ws.getCell(`A${rNote}`).value = 'Subtotal, Total Belanja, dan Sisa Modal memakai rumus. Ubah harga, kuantiti, atau modal di sel masing-masing, angka lain ikut menyesuaikan.';
-    ws.getCell(`A${rNote}`).font = { name: 'Calibri', size: 9, italic: true, color: { argb: MUTED } };
+    ws.getCell(`A${rNote}`).value = 'Subtotal, total, sisa modal, laba kotor, dan uang kas akhir memakai rumus. Ubah harga, kuantiti, atau modal di sel masing-masing, angka lain ikut menyesuaikan.';
+    ws.getCell(`A${rNote}`).font = font({ size: 9, italic: true, color: { argb: MUTED } });
     ws.getCell(`A${rNote}`).alignment = { wrapText: true, vertical: 'top', indent: 1 };
     ws.getRow(rNote).height = 28;
 
     ws.pageSetup.printArea = `A1:G${rNote}`;
-    ws.headerFooter.oddFooter = '&LPawon Oelek · Laporan Belanja&RHalaman &P dari &N';
+    ws.headerFooter.oddFooter = '&LPawon Oelek · Laporan Belanja & Penjualan&RHalaman &P dari &N';
+
+    const buf = await wb.xlsx.writeBuffer();
+    return new Blob([buf], { type: XLSX_MIME });
+  }
+
+  async function buildRecapXlsx() {
+    const ExcelJS = await ensureExcelJS();
+    const now = new Date();
+    const rows = state.history.map((h) => ({ h, S: summarize(h) }));
+    const keyOf = (e) => (e.S.all.length ? e.S.all[0].time : e.h.savedAt);
+    rows.sort((a, b) => (keyOf(a) < keyOf(b) ? -1 : keyOf(a) > keyOf(b) ? 1 : 0));
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Pawon Oelek'; wb.created = now; wb.modified = now;
+    const ws = wb.addWorksheet('Rekap Histori', {
+      views: [{ state: 'frozen', ySplit: 5, showGridLines: false }],
+      pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
+    });
+    ws.columns = [{ width: 5 }, { width: 34 }, { width: 17 }, { width: 16 }, { width: 16 }, { width: 16 }, { width: 16 }, { width: 16 }, { width: 17 }];
+    const RP = '"Rp" #,##0;[Red]-"Rp" #,##0';
+    const CHILI = 'FFC4231B', INK = 'FF1F231E', MUTED = 'FF5C6459', ZEBRA = 'FFF7F8F5', LINE = 'FFD4D8CF', WHITE = 'FFFFFFFF';
+    const fill = (argb) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } });
+    const font = (o = {}) => ({ name: 'Calibri', size: 11, color: { argb: INK }, ...o });
+    const thin = { style: 'thin', color: { argb: LINE } };
+    const box = { top: thin, left: thin, bottom: thin, right: thin };
+
+    ws.mergeCells('A1:I1');
+    ws.getCell('A1').value = 'PAWON OELEK';
+    ws.getCell('A1').font = font({ size: 20, bold: true, color: { argb: WHITE } });
+    ws.getCell('A1').fill = fill(CHILI);
+    ws.getCell('A1').alignment = { vertical: 'middle', indent: 1 };
+    ws.getRow(1).height = 36;
+    ws.mergeCells('A2:I2');
+    ws.getCell('A2').value = 'Rekap Histori Penghitungan';
+    ws.getCell('A2').font = font({ size: 12, bold: true, color: { argb: WHITE } });
+    ws.getCell('A2').fill = fill(CHILI);
+    ws.getCell('A2').alignment = { vertical: 'middle', indent: 1 };
+    ws.getRow(2).height = 22;
+    ws.mergeCells('A3:I3');
+    ws.getCell('A3').value = `${rows.length} penghitungan tersimpan    ·    Dibuat: ${fmtLongDate(now)}, pukul ${fmtClock(now)}`;
+    ws.getCell('A3').font = font({ size: 10, color: { argb: MUTED } });
+    ws.getCell('A3').alignment = { vertical: 'middle', indent: 1 };
+
+    const head = ws.getRow(5);
+    head.values = ['No', 'Periode', 'Disimpan', 'Modal', 'Total Belanja', 'Total Penjualan', 'Sisa Modal', 'Laba Kotor', 'Uang Kas Akhir'];
+    head.height = 30;
+    head.eachCell((c) => {
+      c.font = font({ bold: true, color: { argb: WHITE } });
+      c.fill = fill(INK);
+      c.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      c.border = box;
+    });
+    const first = 6;
+    rows.forEach(({ h, S }, i) => {
+      const r = first + i;
+      const d = parseLocal(h.savedAt);
+      const row = ws.getRow(r);
+      row.values = [
+        i + 1,
+        periodText(S.all.length ? S.all : [{ time: h.savedAt }]),
+        new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes())),
+        S.modal, S.totalBuy, S.totalSale,
+        { formula: `D${r}-E${r}`, result: S.sisa },
+        { formula: `F${r}-E${r}`, result: S.laba },
+        { formula: `G${r}+F${r}`, result: S.cash }
+      ];
+      row.eachCell({ includeEmpty: true }, (c, col) => {
+        c.font = font();
+        c.border = box;
+        if (i % 2 === 1) c.fill = fill(ZEBRA);
+        c.alignment = { vertical: 'middle', horizontal: col === 1 || col === 3 ? 'center' : col === 2 ? 'left' : 'right', wrapText: col === 2 };
+        if (col >= 4) c.numFmt = RP;
+      });
+      row.getCell(3).numFmt = 'dd/mm/yyyy hh:mm';
+      row.getCell(8).font = font({ bold: true });
+    });
+    const last = first + rows.length - 1;
+    const t = last + 1;
+    ws.mergeCells(`A${t}:D${t}`);
+    ws.getCell(`A${t}`).value = 'Jumlah';
+    ws.getCell(`A${t}`).alignment = { horizontal: 'right', vertical: 'middle', indent: 1 };
+    const sumCell = (col, result) => { const c = ws.getCell(`${col}${t}`); c.value = { formula: `SUM(${col}${first}:${col}${last})`, result }; c.numFmt = RP; };
+    sumCell('E', rows.reduce((s, e) => s + e.S.totalBuy, 0));
+    sumCell('F', rows.reduce((s, e) => s + e.S.totalSale, 0));
+    sumCell('H', rows.reduce((s, e) => s + e.S.laba, 0));
+    ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].forEach((col) => {
+      const c = ws.getCell(`${col}${t}`);
+      c.font = font({ bold: true });
+      c.border = { top: { style: 'medium', color: { argb: INK } } };
+    });
+    ws.getRow(t).height = 24;
+    const n = t + 2;
+    ws.mergeCells(`A${n}:I${n}`);
+    ws.getCell(`A${n}`).value = 'Sisa modal = modal − belanja · Laba kotor = penjualan − belanja · Uang kas akhir = sisa modal + penjualan. Kolom hasil memakai rumus.';
+    ws.getCell(`A${n}`).font = font({ size: 9, italic: true, color: { argb: MUTED } });
+    ws.headerFooter.oddFooter = '&LPawon Oelek · Rekap Histori&RHalaman &P dari &N';
 
     const buf = await wb.xlsx.writeBuffer();
     return new Blob([buf], { type: XLSX_MIME });
   }
 
   /* ---------- Boot ---------- */
-  $('itemList').append(...COMMON.map(([n]) => Object.assign(document.createElement('option'), { value: n })));
-  $('unitList').append(...UNITS.map((u) => Object.assign(document.createElement('option'), { value: u })));
+  const options = (id, list) => $(id).append(...list.map((v) => Object.assign(document.createElement('option'), { value: Array.isArray(v) ? v[0] : v })));
+  options('itemList', COMMON);
+  options('menuList', MENU);
+  options('unitList', UNITS);
   $('today').textContent = fmtLongDate(new Date());
   $('fTime').value = nowLocal();
+  applyView();
   updateCalc();
   render();
 
