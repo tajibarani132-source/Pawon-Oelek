@@ -469,11 +469,11 @@ tfoot .num{font-size:1.05rem}
                 <input id="kCustomer" maxlength="60" autocomplete="off" placeholder="Boleh kosong, mis. Bu Rina">
               </div>
               <div class="field">
-                <label for="kTime">Tanggal &amp; jam nota</label>
-                <input type="datetime-local" id="kTime">
+                <label for="kTime">Tanggal nota</label>
+                <input type="date" id="kTime">
                 <div class="k-time-state">
-                  <span class="k-hint" id="kTimeHint">Otomatis memakai waktu saat nota disimpan.</span>
-                  <button type="button" class="link-btn" id="kTimeNow" hidden>Pakai waktu sekarang</button>
+                  <span class="k-hint" id="kTimeHint">Otomatis memakai tanggal hari ini.</span>
+                  <button type="button" class="link-btn" id="kTimeNow" hidden>Pakai tanggal hari ini</button>
                 </div>
               </div>
             </div>
@@ -752,7 +752,7 @@ tfoot .num{font-size:1.05rem}
     footer: 'Terima kasih atas kunjungan Anda.\nSelamat menikmati!', paper: '58', showLogo: true, autoRecord: true
   };
   const PAY_METHODS = ['Tunai', 'QRIS', 'Transfer'];
-  // draft.time '' = automatic (the moment the nota is saved); otherwise a manual YYYY-MM-DDTHH:MM
+  // draft.time '' = automatic (today); otherwise a manual date YYYY-MM-DD
   const emptyDraft = () => ({ items: [], customer: '', time: '', method: 'Tunai', paid: 0, sample: false });
   const sampleDraft = () => ({
     items: [{ id: uid(), name: 'Ayam penyet', unit: 'porsi', price: 18000, qty: 2 }, { id: uid(), name: 'Es teh manis', unit: 'gelas', price: 4000, qty: 2 }],
@@ -790,7 +790,7 @@ tfoot .num{font-size:1.05rem}
     customer: String(d.customer || '').slice(0, 60),
     method: PAY_METHODS.includes(d.method) ? d.method : 'Tunai',
     paid: Math.max(0, Math.round(Number(d.paid) || 0)),
-    time: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(d.time) ? String(d.time).slice(0, 16) : '',
+    time: /^\d{4}-\d{2}-\d{2}/.test(d.time) ? String(d.time).slice(0, 10) : '',
     sample: !!d.sample
   });
   const normNota = (n) => ({
@@ -1388,7 +1388,7 @@ tfoot .num{font-size:1.05rem}
   const canPrint = typeof window.print === 'function' && !(window.claude && window.top !== window);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const num = (n) => Math.round(n).toLocaleString('id-ID');
-  const fmtNotaTime = (s) => { const d = parseLocal(s); return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${fmtClock(d)}`; };
+  const fmtNotaDate = (s) => { const d = parseLocal(s); return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`; };
   const kNote = (msg, tone) => {
     const n = $('kNote');
     n.textContent = msg;
@@ -1436,7 +1436,7 @@ tfoot .num{font-size:1.05rem}
     if (sh.tagline) h += `<div class="r-sub">${esc(sh.tagline)}</div>`;
     if (sh.address) h += `<div class="r-addr">${esc(sh.address)}</div>`;
     if (sh.phone) h += `<div class="r-addr">Telp/WA ${esc(sh.phone)}</div>`;
-    h += '<hr>' + kv('No. nota', n.no) + kv('Tanggal', fmtNotaTime(n.time));
+    h += '<hr>' + kv('No. nota', n.no) + kv('Tanggal', fmtNotaDate(n.time));
     if (n.customer) h += kv('Customer', n.customer);
     h += '<hr>';
     n.items.forEach((it) => {
@@ -1450,7 +1450,8 @@ tfoot .num{font-size:1.05rem}
     if (sh.footer.trim()) h += `<div class="r-foot">${esc(sh.footer.trim())}</div>`;
     return h;
   }
-  const draftTime = () => state.draft.time || nowLocal();
+  // A manual date keeps the current clock time internally, so notas of one day stay in order.
+  const draftTime = () => (state.draft.time ? `${state.draft.time}T${nowLocal().slice(11, 16)}` : nowLocal());
   const draftNota = () => {
     const time = draftTime();
     return { no: nextNotaNo(time), time, customer: state.draft.customer.trim(), method: state.draft.method, paid: state.draft.paid, items: state.draft.items };
@@ -1464,14 +1465,13 @@ tfoot .num{font-size:1.05rem}
     const T = notaTotals(d);
     $('kNo').textContent = `No. berikutnya ${nextNotaNo(draftTime())}`;
     if (document.activeElement !== $('kCustomer')) $('kCustomer').value = d.customer;
-    if (document.activeElement !== $('kTime')) $('kTime').value = draftTime();
+    if (document.activeElement !== $('kTime')) $('kTime').value = draftTime().slice(0, 10);
     const hint = $('kTimeHint');
-    if (d.time) {
-      const diffDays = Math.round((parseLocal(d.time.slice(0, 10)) - parseLocal(nowLocal().slice(0, 10))) / 864e5);
-      hint.textContent = diffDays === 0 ? 'Diatur manual.' : `Diatur manual: ${fmtLongDate(parseLocal(d.time))}.`;
+    if (d.time && d.time !== nowLocal().slice(0, 10)) {
+      hint.textContent = `Diatur manual: ${fmtLongDate(parseLocal(d.time))}.`;
       hint.dataset.tone = 'warn';
     } else {
-      hint.textContent = 'Otomatis memakai waktu saat nota disimpan.';
+      hint.textContent = 'Otomatis memakai tanggal hari ini.';
       delete hint.dataset.tone;
     }
     $('kTimeNow').hidden = !d.time;
@@ -1543,7 +1543,7 @@ tfoot .num{font-size:1.05rem}
       const main = document.createElement('div'); main.className = 'nl-main';
       const no = document.createElement('strong'); no.textContent = n.no;
       const meta = document.createElement('span'); meta.className = 'nl-meta';
-      meta.textContent = `${fmtRowTime(n.time)} · ${n.customer || 'Tanpa nama'} · ${n.items.length} menu · ${n.method}`;
+      meta.textContent = `${fmtDate(parseLocal(n.time))} · ${n.customer || 'Tanpa nama'} · ${n.items.length} menu · ${n.method}`;
       main.append(no, meta);
       const right = document.createElement('div'); right.className = 'nl-right';
       const tot = document.createElement('span'); tot.className = 'nl-total'; tot.textContent = rupiah(notaTotals(n).total);
@@ -1619,17 +1619,17 @@ tfoot .num{font-size:1.05rem}
   $('kCustomer').addEventListener('input', (e) => { state.draft.customer = e.target.value; save(); render(); });
   $('kTime').addEventListener('change', (e) => {
     const v = e.target.value;
-    state.draft.time = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v) ? v.slice(0, 16) : '';
+    state.draft.time = /^\d{4}-\d{2}-\d{2}$/.test(v) && v !== nowLocal().slice(0, 10) ? v : '';
     save(); render();
   });
   $('kTimeNow').addEventListener('click', () => { state.draft.time = ''; save(); render(); $('kTime').focus(); });
-  // Keep the automatic time current while the Nota tab stays open.
+  // Roll the automatic date over at midnight while the Nota tab stays open.
   setInterval(() => {
     if (state.view === 'nota' && !state.draft.time && document.activeElement !== $('kTime')) {
-      $('kTime').value = nowLocal();
+      $('kTime').value = nowLocal().slice(0, 10);
       $('kNo').textContent = `No. berikutnya ${nextNotaNo(nowLocal())}`;
     }
-  }, 30000);
+  }, 60000);
   $('kMethod').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-method]');
     if (!b) return;
@@ -1780,7 +1780,7 @@ tfoot .num{font-size:1.05rem}
     if (sh.phone) text(`Telp/WA ${sh.phone}`, F.mono(400, 13), 'center', 19);
     dash();
     kv('No. nota', n.no, F.mono(400, 14), 21);
-    kv('Tanggal', fmtNotaTime(n.time), F.mono(400, 14), 21);
+    kv('Tanggal', fmtNotaDate(n.time), F.mono(400, 14), 21);
     if (n.customer) text(`Customer: ${n.customer}`, F.mono(400, 14), 'left', 21);
     dash();
     n.items.forEach((it) => {
