@@ -278,6 +278,11 @@ tfoot .num{font-size:1.05rem}
 .lines .change dd{color:var(--tone);font-weight:700}
 .k-actions{display:flex;flex-wrap:wrap;gap:10px}
 .k-hint{margin:0;font-size:.82rem;color:var(--muted)}
+.k-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:560px){.k-row{grid-template-columns:minmax(0,1fr)}}
+.k-time-state{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;min-height:24px}
+.k-time-state .link-btn{min-height:28px;padding:2px 6px;color:var(--chili)}
+.k-hint[data-tone="warn"]{color:var(--warn);font-weight:600}
 .receipt{background:var(--paper);color:var(--paper-ink);font-family:var(--font-mono);font-size:12px;line-height:1.45;padding:16px 14px 20px;border-radius:4px;box-shadow:0 0 0 1px var(--line),0 10px 24px rgba(0,0,0,.14);max-width:300px;margin-inline:auto;overflow-wrap:anywhere}
 .receipt .r-logo{display:block;width:96px;height:96px;margin:0 auto 6px}
 .receipt .r-name{font-family:var(--font-display);font-weight:800;font-size:18px;line-height:1.1;text-align:center}
@@ -458,9 +463,19 @@ tfoot .num{font-size:1.05rem}
         </div>
         <div class="kasir-grid">
           <div class="kasir-form">
-            <div class="field">
-              <label for="kCustomer">Nama customer (boleh dikosongkan)</label>
-              <input id="kCustomer" maxlength="60" autocomplete="off" placeholder="mis. Bu Rina">
+            <div class="k-row">
+              <div class="field">
+                <label for="kCustomer">Nama customer</label>
+                <input id="kCustomer" maxlength="60" autocomplete="off" placeholder="Boleh kosong, mis. Bu Rina">
+              </div>
+              <div class="field">
+                <label for="kTime">Tanggal &amp; jam nota</label>
+                <input type="datetime-local" id="kTime">
+                <div class="k-time-state">
+                  <span class="k-hint" id="kTimeHint">Otomatis memakai waktu saat nota disimpan.</span>
+                  <button type="button" class="link-btn" id="kTimeNow" hidden>Pakai waktu sekarang</button>
+                </div>
+              </div>
             </div>
             <form id="kItemForm" class="k-add" novalidate>
               <div class="field k-name">
@@ -737,10 +752,11 @@ tfoot .num{font-size:1.05rem}
     footer: 'Terima kasih atas kunjungan Anda.\nSelamat menikmati!', paper: '58', showLogo: true, autoRecord: true
   };
   const PAY_METHODS = ['Tunai', 'QRIS', 'Transfer'];
-  const emptyDraft = () => ({ items: [], customer: '', method: 'Tunai', paid: 0, sample: false });
+  // draft.time '' = automatic (the moment the nota is saved); otherwise a manual YYYY-MM-DDTHH:MM
+  const emptyDraft = () => ({ items: [], customer: '', time: '', method: 'Tunai', paid: 0, sample: false });
   const sampleDraft = () => ({
     items: [{ id: uid(), name: 'Ayam penyet', unit: 'porsi', price: 18000, qty: 2 }, { id: uid(), name: 'Es teh manis', unit: 'gelas', price: 4000, qty: 2 }],
-    customer: 'Contoh customer', method: 'Tunai', paid: 50000, sample: true
+    customer: 'Contoh customer', time: '', method: 'Tunai', paid: 50000, sample: true
   });
   function sampleState() {
     return {
@@ -774,6 +790,7 @@ tfoot .num{font-size:1.05rem}
     customer: String(d.customer || '').slice(0, 60),
     method: PAY_METHODS.includes(d.method) ? d.method : 'Tunai',
     paid: Math.max(0, Math.round(Number(d.paid) || 0)),
+    time: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(d.time) ? String(d.time).slice(0, 16) : '',
     sample: !!d.sample
   });
   const normNota = (n) => ({
@@ -1433,7 +1450,11 @@ tfoot .num{font-size:1.05rem}
     if (sh.footer.trim()) h += `<div class="r-foot">${esc(sh.footer.trim())}</div>`;
     return h;
   }
-  const draftNota = () => ({ no: nextNotaNo(nowLocal()), time: nowLocal(), customer: state.draft.customer.trim(), method: state.draft.method, paid: state.draft.paid, items: state.draft.items });
+  const draftTime = () => state.draft.time || nowLocal();
+  const draftNota = () => {
+    const time = draftTime();
+    return { no: nextNotaNo(time), time, customer: state.draft.customer.trim(), method: state.draft.method, paid: state.draft.paid, items: state.draft.items };
+  };
 
   function renderKasir() {
     const today = nowLocal().slice(0, 10);
@@ -1441,8 +1462,19 @@ tfoot .num{font-size:1.05rem}
     if (state.view !== 'nota') return;
     const d = state.draft;
     const T = notaTotals(d);
-    $('kNo').textContent = `No. berikutnya ${nextNotaNo(nowLocal())}`;
+    $('kNo').textContent = `No. berikutnya ${nextNotaNo(draftTime())}`;
     if (document.activeElement !== $('kCustomer')) $('kCustomer').value = d.customer;
+    if (document.activeElement !== $('kTime')) $('kTime').value = draftTime();
+    const hint = $('kTimeHint');
+    if (d.time) {
+      const diffDays = Math.round((parseLocal(d.time.slice(0, 10)) - parseLocal(nowLocal().slice(0, 10))) / 864e5);
+      hint.textContent = diffDays === 0 ? 'Diatur manual.' : `Diatur manual: ${fmtLongDate(parseLocal(d.time))}.`;
+      hint.dataset.tone = 'warn';
+    } else {
+      hint.textContent = 'Otomatis memakai waktu saat nota disimpan.';
+      delete hint.dataset.tone;
+    }
+    $('kTimeNow').hidden = !d.time;
 
     const chips = $('kChips');
     chips.replaceChildren();
@@ -1585,6 +1617,19 @@ tfoot .num{font-size:1.05rem}
     save(); render();
   });
   $('kCustomer').addEventListener('input', (e) => { state.draft.customer = e.target.value; save(); render(); });
+  $('kTime').addEventListener('change', (e) => {
+    const v = e.target.value;
+    state.draft.time = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v) ? v.slice(0, 16) : '';
+    save(); render();
+  });
+  $('kTimeNow').addEventListener('click', () => { state.draft.time = ''; save(); render(); $('kTime').focus(); });
+  // Keep the automatic time current while the Nota tab stays open.
+  setInterval(() => {
+    if (state.view === 'nota' && !state.draft.time && document.activeElement !== $('kTime')) {
+      $('kTime').value = nowLocal();
+      $('kNo').textContent = `No. berikutnya ${nextNotaNo(nowLocal())}`;
+    }
+  }, 30000);
   $('kMethod').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-method]');
     if (!b) return;
@@ -1641,7 +1686,7 @@ tfoot .num{font-size:1.05rem}
       $('kPaid').focus();
       return;
     }
-    const time = nowLocal();
+    const time = draftTime();
     const nota = {
       id: uid(), no: nextNotaNo(time), time, customer: d.customer.trim(), method: d.method,
       paid: d.method === 'Tunai' ? (d.paid > 0 ? d.paid : total) : total,
